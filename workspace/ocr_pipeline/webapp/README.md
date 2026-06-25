@@ -1,37 +1,39 @@
-# OCR SQLite SPA
+# OCR Pipeline Webapps
 
-Lightweight single-page web app for browsing OCR data stored in SQLite.
+Lightweight browsers for OCR catalog data.
 
-## Features
+| App | Backend | Port | UI |
+|-----|---------|------|-----|
+| `app.py` | SQLite (`08_sqlite/`) | **8765** | Sidebar list |
+| **`pg_app.py`** | **PostgreSQL** (`ocr_catalog`) | **8766** | **Table list → detail** |
 
-- List documents from `documents` table
-- Filter by `status` and search by source path
-- View document metadata and markdown/doc_json content
-- Port availability check before server start
-- Default DB comes from `../08_sqlite/ACTIVE_DB.txt`
+## PostgreSQL catalog (khuyến nghị)
 
-## Run
+```bash
+# Đảm bảo Postgres đang chạy
+cd workspace/ocr_pipeline/infra && docker compose up -d ocr-postgres
+
+# Chạy webapp
+uv run python workspace/ocr_pipeline/webapp/pg_app.py --host 127.0.0.1 --port 8766
+```
+
+Mở: **http://127.0.0.1:8766**
+
+- Bảng danh sách: ID, file, đường dẫn OCIS, status, OCR, AI, category
+- Click dòng → panel detail: markdown, AI metadata, verified fields
+- Lọc: status, drive (`HTH-Shared-Drive`, `/Yen`), tìm kiếm path
+- Phân trang 50 dòng/trang
+
+Cần `.env` với `OCR_DATABASE_URL` (mặc định `postgresql://ocr:ocr@127.0.0.1:5433/ocr_catalog`).
+
+## SQLite viewer (legacy)
 
 ```bash
 uv run python workspace/ocr_pipeline/webapp/app.py --host 127.0.0.1 --port 8765
 ```
 
-Open: `http://127.0.0.1:8765`
-
-## Port check only
+## Port check
 
 ```bash
-uv run python workspace/ocr_pipeline/webapp/app.py --port 8765 --check-port-only
+uv run python workspace/ocr_pipeline/webapp/pg_app.py --port 8766 --check-port-only
 ```
-
-## AI review (text, default API group)
-
-Use a **default-group** API key with a text model (e.g. `deepseek-v4-pro`).  
-Do not use `gemini-3-flash` for chat/text (image-only per provider policy). Codex group keys are for image models (~10 RPM).
-
-```bash
-uv run python scripts/ai_review_sqlite.py --sleep-seconds 6
-```
-
-Requires `.env` (see repo root `.env.example`).
-

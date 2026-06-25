@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260625_1834-postgres-catalog-ui-plan.md](./20260625_1834-postgres-catalog-ui-plan.md): Plan UI catalog Postgres (table + detail) và mở rộng sau.
 - [20260625_1829-hth-shared-drive-next-steps.md](./20260625_1829-hth-shared-drive-next-steps.md): Checklist sau sync HTH-Shared-Drive (OCR batch là bước kế).
 - [20260625_1819-hung-thinh-dept-cloud-plan.md](./20260625_1819-hung-thinh-dept-cloud-plan.md): Kế hoạch triển khai Cloud theo phòng ban cho BV Hưng Thịnh.
 - [20260625_1815-ocis-project-space-plan.md](./20260625_1815-ocis-project-space-plan.md): Kế hoạch tạo Project Space (Shared Drive) và chỉnh sync OCR.
