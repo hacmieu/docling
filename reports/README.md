@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260625_1743-architecture-advisory-report.md](./20260625_1743-architecture-advisory-report.md): Architecture advisory report comparing metadata-first vs vector-first approaches.
 - [20260625_1731-ai-review-execution-report.md](./20260625_1731-ai-review-execution-report.md): AI review script rollout and DeepSeek batch execution results.
 - [20260625_1705-light-theme-rerun-report.md](./20260625_1705-light-theme-rerun-report.md): Execution report for light-theme update and quality OCR rerun.
 - [20260625_1652-ocr-spa-implementation-report.md](./20260625_1652-ocr-spa-implementation-report.md): SPA implementation and API smoke-test report.

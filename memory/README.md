@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260625_1743-architecture-direction-discussion.md](./20260625_1743-architecture-direction-discussion.md): Advisory on metadata-first catalog with Nextcloud and low-cost AI usage.
 - [20260625_1731-ai-review-deepseek-default-group.md](./20260625_1731-ai-review-deepseek-default-group.md): AI review columns, DeepSeek default-group model, 23/23 success.
 - [20260625_1705-light-theme-and-quality-rerun.md](./20260625_1705-light-theme-and-quality-rerun.md): Light-theme SPA plus quality-first EasyOCR rerun and active DB update.
 - [20260625_1652-ocr-spa-webapp.md](./20260625_1652-ocr-spa-webapp.md): Lightweight SPA webapp created for browsing OCR SQLite data.
