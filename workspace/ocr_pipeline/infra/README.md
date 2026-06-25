@@ -47,7 +47,10 @@ uv run python scripts/owncloud_sync_catalog.py \
   --drive-alias project/hth-shared-drive \
   --remote-prefix "/Truyền Thông/7.PHỤ SẢN"
 ```
-uv run python scripts/migrate_sqlite_to_postgres.py
+# OCR batch từ catalog Postgres (có SLA timing)
+uv run python scripts/ocr_catalog_postgres.py --limit 10 \
+  --ocr-engine easyocr --ocr-lang vi,en \
+  --easyocr-confidence-threshold 0.25 --force-full-page-ocr
 uv run python scripts/ai_enrich_documents.py --sleep-seconds 6
 uv run python scripts/import_verified_metadata.py \
   --input-json workspace/ocr_pipeline/02_manifest/verified_backfill.sample.json
