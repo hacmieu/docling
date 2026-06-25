@@ -31,7 +31,7 @@ services:
       - "9200:9200"
     environment:
       OCIS_INSECURE: "true"
-      OCIS_URL: "https://localhost:9200"
+      OCIS_URL: "https://127.0.0.1:9200"
       PROXY_HTTP_ADDR: "0.0.0.0:9200"
       OCIS_LOG_LEVEL: info
       PROXY_ENABLE_BASIC_AUTH: "true"

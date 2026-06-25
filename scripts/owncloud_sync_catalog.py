@@ -65,28 +65,48 @@ def sha256_file(path: Path) -> str:
 
 
 def list_remote_files(cfg: dict[str, str], prefix: str) -> list[str]:
+    """List files under prefix via WebDAV PROPFIND (OCIS rejects Depth: infinity)."""
     root = dav_root(cfg)
-    target = urljoin(root, prefix.lstrip("/"))
-    response = requests.request(
-        "PROPFIND",
-        target,
-        auth=(cfg["user"], cfg["password"]),
-        headers={"Depth": "infinity"},
-        timeout=120,
-        verify=not cfg["insecure"],
-    )
-    response.raise_for_status()
-    paths: list[str] = []
-    for response_el in ET.fromstring(response.content).findall("d:response", DAV_NS):
-        href_el = response_el.find("d:href", DAV_NS)
-        if href_el is None or href_el.text is None:
+    start_href = urljoin(f"/remote.php/dav/files/{cfg['user']}/", prefix.lstrip("/"))
+    if not start_href.endswith("/"):
+        start_href += "/"
+
+    dirs_to_scan: list[str] = [start_href]
+    file_paths: list[str] = []
+    seen_dirs: set[str] = set()
+
+    while dirs_to_scan:
+        target_href = dirs_to_scan.pop()
+        if target_href in seen_dirs:
             continue
-        href = href_el.text
-        if not href.endswith("/"):
+        seen_dirs.add(target_href)
+
+        request_url = f"{cfg['base']}{target_href}"
+
+        response = requests.request(
+            "PROPFIND",
+            request_url,
+            auth=(cfg["user"], cfg["password"]),
+            headers={"Depth": "1"},
+            timeout=120,
+            verify=not cfg["insecure"],
+        )
+        response.raise_for_status()
+
+        for response_el in ET.fromstring(response.content).findall("d:response", DAV_NS):
+            href_el = response_el.find("d:href", DAV_NS)
+            if href_el is None or href_el.text is None:
+                continue
+            href = href_el.text
+            if href.endswith("/"):
+                if href != target_href and href not in seen_dirs:
+                    dirs_to_scan.append(href)
+                continue
             rel = href.split(f"/files/{cfg['user']}/", 1)[-1]
             rel = "/" + rel.lstrip("/")
-            paths.append(rel)
-    return sorted(set(paths))
+            file_paths.append(rel)
+
+    return sorted(set(file_paths))
 
 
 def upsert_catalog_row(
