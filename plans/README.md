@@ -4,6 +4,10 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260625_1705-quality-ocr-operation-plan.md](./20260625_1705-quality-ocr-operation-plan.md): Quality-first EasyOCR operational preset and run discipline.
+- [20260625_1652-ocr-spa-deployment-plan.md](./20260625_1652-ocr-spa-deployment-plan.md): Run/deploy steps for OCR SQLite SPA with port pre-check.
+- [20260625_1634-easyocr-as-baseline-plan.md](./20260625_1634-easyocr-as-baseline-plan.md): Adopt EasyOCR DB as current baseline and keep others for regression checks.
+- [20260625_1612-next-quality-eval-plan.md](./20260625_1612-next-quality-eval-plan.md): Plan for field-level Vietnamese OCR quality benchmarking.
 - [20260625_1603-vietnamese-ocr-improvement-plan.md](./20260625_1603-vietnamese-ocr-improvement-plan.md): Experiment plan to improve Vietnamese OCR quality.
 - [20260625_1559-next-evaluation-step.md](./20260625_1559-next-evaluation-step.md): Follow-up plan for OCR quality comparison runs.
 - [20260625_1551-production-ocr-folder-plan.md](./20260625_1551-production-ocr-folder-plan.md): Lifecycle plan for production OCR folder operations.

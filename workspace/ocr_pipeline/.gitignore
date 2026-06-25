@@ -11,6 +11,7 @@
 !07_exports/
 !08_sqlite/
 !09_logs/
+!webapp/
 !01_inbox/.gitkeep
 !02_manifest/.gitkeep
 !03_processing/.gitkeep
@@ -19,4 +20,9 @@
 !06_quarantine/.gitkeep
 !07_exports/.gitkeep
 !08_sqlite/.gitkeep
+!08_sqlite/ACTIVE_DB.txt
 !09_logs/.gitkeep
+!webapp/README.md
+!webapp/app.py
+!webapp/static/
+!webapp/static/index.html

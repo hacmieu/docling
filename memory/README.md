@@ -4,6 +4,10 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260625_1705-light-theme-and-quality-rerun.md](./20260625_1705-light-theme-and-quality-rerun.md): Light-theme SPA plus quality-first EasyOCR rerun and active DB update.
+- [20260625_1652-ocr-spa-webapp.md](./20260625_1652-ocr-spa-webapp.md): Lightweight SPA webapp created for browsing OCR SQLite data.
+- [20260625_1634-active-db-easyocr.md](./20260625_1634-active-db-easyocr.md): Set EasyOCR output as active OCR evaluation DB.
+- [20260625_1612-vietnamese-ocr-comparison-runs.md](./20260625_1612-vietnamese-ocr-comparison-runs.md): Executed three Vietnamese OCR configurations for comparison.
 - [20260625_1603-vietnamese-ocr-options.md](./20260625_1603-vietnamese-ocr-options.md): Added Vietnamese-focused OCR engine and language tuning options.
 - [20260625_1559-ingestion-run-completed.md](./20260625_1559-ingestion-run-completed.md): First OCR ingestion run completed into SQLite with 13/13 success.
 - [20260625_1551-ocr-workspace-structure.md](./20260625_1551-ocr-workspace-structure.md): Production-oriented OCR workspace scaffolding.

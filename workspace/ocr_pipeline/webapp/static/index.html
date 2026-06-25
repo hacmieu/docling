@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OCR SQLite Viewer</title>
+    <style>
+      :root { color-scheme: light; font-family: Inter, Arial, sans-serif; }
+      body { margin: 0; background: #f8fafc; color: #0f172a; }
+      .layout { display: grid; grid-template-columns: 380px 1fr; min-height: 100vh; }
+      .panel { border-right: 1px solid #dbe3ef; padding: 12px; overflow: auto; background: #ffffff; }
+      .detail { padding: 12px; overflow: auto; }
+      .toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
+      input, select, button { background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 8px; border-radius: 8px; }
+      button { cursor: pointer; }
+      .stats { font-size: 12px; opacity: 0.9; margin: 8px 0 12px; }
+      .item { border: 1px solid #d8e1ee; border-radius: 10px; padding: 10px; margin-bottom: 8px; cursor: pointer; background: #ffffff; }
+      .item:hover, .item.active { border-color: #3b82f6; background: #eff6ff; }
+      .name { font-size: 13px; font-weight: 600; word-break: break-word; }
+      .meta { font-size: 12px; color: #475569; margin-top: 6px; }
+      .section { margin-bottom: 14px; }
+      pre { background: #ffffff; border: 1px solid #d8e1ee; padding: 12px; border-radius: 10px; white-space: pre-wrap; word-break: break-word; }
+      .hint { opacity: 0.8; font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="panel">
+        <div class="toolbar">
+          <input id="search" placeholder="Search by file name..." />
+        </div>
+        <div class="toolbar">
+          <select id="status">
+            <option value="">All statuses</option>
+            <option value="success">success</option>
+            <option value="failure">failure</option>
+          </select>
+          <button id="reload">Reload</button>
+        </div>
+        <div class="stats" id="stats">Loading stats...</div>
+        <div id="list"></div>
+      </aside>
+      <main class="detail">
+        <div id="detail" class="hint">Select a document to view markdown and metadata.</div>
+      </main>
+    </div>
+    <script>
+      const listEl = document.getElementById("list");
+      const detailEl = document.getElementById("detail");
+      const statsEl = document.getElementById("stats");
+      const searchEl = document.getElementById("search");
+      const statusEl = document.getElementById("status");
+      const reloadBtn = document.getElementById("reload");
+      let activeId = null;
+
+      async function fetchStats() {
+        const res = await fetch("/api/stats");
+        const data = await res.json();
+        const s = data.stats;
+        statsEl.textContent = `total=${s.total} success=${s.success} failure=${s.failure} avg_markdown_len=${Math.round(s.avg_markdown_len)}`;
+      }
+
+      async function fetchList() {
+        const q = new URLSearchParams();
+        q.set("limit", "200");
+        if (searchEl.value.trim()) q.set("q", searchEl.value.trim());
+        if (statusEl.value) q.set("status", statusEl.value);
+        const res = await fetch(`/api/documents?${q.toString()}`);
+        const data = await res.json();
+        const items = data.items || [];
+        listEl.innerHTML = "";
+        for (const item of items) {
+          const div = document.createElement("div");
+          div.className = "item" + (item.id === activeId ? " active" : "");
+          const fileName = item.source_path.split("/").pop();
+          div.innerHTML = `
+            <div class="name">${fileName}</div>
+            <div class="meta">id=${item.id} | ${item.status} | md_len=${item.markdown_len || 0}</div>
+          `;
+          div.onclick = () => openDoc(item.id);
+          listEl.appendChild(div);
+        }
+      }
+
+      async function openDoc(id) {
+        activeId = id;
+        await fetchList();
+        const res = await fetch(`/api/documents/${id}`);
+        const data = await res.json();
+        if (!data.ok) {
+          detailEl.textContent = data.error || "Cannot load document";
+          return;
+        }
+        const d = data.item;
+        detailEl.innerHTML = `
+          <div class="section"><b>Source</b><br/>${d.source_path}</div>
+          <div class="section"><b>Status</b><br/>${d.status}</div>
+          <div class="section"><b>SHA256</b><br/><code>${d.source_sha256}</code></div>
+          <div class="section"><b>Markdown</b><pre>${escapeHtml(d.markdown || "")}</pre></div>
+          <div class="section"><b>Doc JSON (raw)</b><pre>${escapeHtml(d.doc_json || "")}</pre></div>
+        `;
+      }
+
+      function escapeHtml(text) {
+        return text
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
+      }
+
+      async function refreshAll() {
+        await fetchStats();
+        await fetchList();
+      }
+
+      reloadBtn.onclick = refreshAll;
+      searchEl.onkeydown = (e) => { if (e.key === "Enter") refreshAll(); };
+      statusEl.onchange = refreshAll;
+      refreshAll();
+    </script>
+  </body>
+</html>
