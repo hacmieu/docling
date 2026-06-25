@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260625_1857-teable-ui-instead-of-fe.md](./20260625_1857-teable-ui-instead-of-fe.md): Teable thay custom FE — sync Postgres→Teable API, không mount DB trực tiếp.
 - [20260625_1853-ocr-batch10-sla.md](./20260625_1853-ocr-batch10-sla.md): Pilot OCR 10 PDF từ OCIS → Postgres với đo SLA.
 - [20260625_1840-catalog-prune-vietnamese-ui.md](./20260625_1840-catalog-prune-vietnamese-ui.md): Prune/dedupe catalog; sửa font tiếng Việt trên webapp Postgres.
 - [20260625_1834-postgres-catalog-webapp.md](./20260625_1834-postgres-catalog-webapp.md): Webapp PostgreSQL table list + detail trên port 8766.

@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260625_1857-teable-integration-plan.md](./20260625_1857-teable-integration-plan.md): Plan tích hợp Teable làm UI catalog (schema bảng, env, sync script).
 - [20260625_1853-ocr-sla-batch-plan.md](./20260625_1853-ocr-sla-batch-plan.md): Plan OCR batch với SLA timing và scale tiếp.
 - [20260625_1840-catalog-reconcile-plan.md](./20260625_1840-catalog-reconcile-plan.md): Quy trình sync + prune sau khi xóa file trên OCIS.
 - [20260625_1834-postgres-catalog-ui-plan.md](./20260625_1834-postgres-catalog-ui-plan.md): Plan UI catalog Postgres (table + detail) và mở rộng sau.
