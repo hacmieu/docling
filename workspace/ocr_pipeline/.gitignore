@@ -1,0 +1,22 @@
+# Keep directory scaffolding but ignore runtime artifacts.
+*
+!README.md
+!.gitignore
+!01_inbox/
+!02_manifest/
+!03_processing/
+!04_processed/
+!05_failed/
+!06_quarantine/
+!07_exports/
+!08_sqlite/
+!09_logs/
+!01_inbox/.gitkeep
+!02_manifest/.gitkeep
+!03_processing/.gitkeep
+!04_processed/.gitkeep
+!05_failed/.gitkeep
+!06_quarantine/.gitkeep
+!07_exports/.gitkeep
+!08_sqlite/.gitkeep
+!09_logs/.gitkeep

@@ -57,6 +57,38 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Force full-page OCR (useful for scanned PDFs; slower).",
     )
+    parser.add_argument(
+        "--ocr-engine",
+        choices=["tesseract", "easyocr", "ocrmac"],
+        default="tesseract",
+        help="OCR engine for PDF files (default: tesseract).",
+    )
+    parser.add_argument(
+        "--ocr-lang",
+        default=None,
+        help=(
+            "Comma-separated OCR language codes. "
+            "Examples: tesseract='vie,eng', easyocr='vi,en', ocrmac='vi-VN,en-US'."
+        ),
+    )
+    parser.add_argument(
+        "--ocr-psm",
+        type=int,
+        default=None,
+        help="Tesseract page segmentation mode (e.g., 3, 6, 11).",
+    )
+    parser.add_argument(
+        "--easyocr-confidence-threshold",
+        type=float,
+        default=0.35,
+        help="EasyOCR confidence threshold in range 0.0-1.0 (default: 0.35).",
+    )
+    parser.add_argument(
+        "--ocrmac-recognition",
+        choices=["accurate", "fast"],
+        default="accurate",
+        help="macOS OCR recognition mode (default: accurate).",
+    )
     return parser.parse_args()
 
 
@@ -92,24 +124,49 @@ def init_db(conn: sqlite3.Connection) -> None:
     )
 
 
-def build_converter(enable_ocr: bool, force_full_page_ocr: bool):
+def build_converter(args: argparse.Namespace):
     from docling.document_converter import DocumentConverter
 
-    if not enable_ocr:
+    if not args.enable_ocr:
         return DocumentConverter()
 
     from docling.datamodel.base_models import InputFormat
     from docling.datamodel.pipeline_options import (
+        EasyOcrOptions,
+        OcrMacOptions,
         PdfPipelineOptions,
         TesseractCliOcrOptions,
     )
     from docling.document_converter import PdfFormatOption
 
+    langs = (
+        [lang.strip() for lang in args.ocr_lang.split(",") if lang.strip()]
+        if args.ocr_lang
+        else None
+    )
+
     pdf_options = PdfPipelineOptions()
     pdf_options.do_ocr = True
-    pdf_options.ocr_options = TesseractCliOcrOptions(
-        force_full_page_ocr=force_full_page_ocr
-    )
+
+    if args.ocr_engine == "easyocr":
+        pdf_options.ocr_options = EasyOcrOptions(
+            lang=langs if langs else ["vi", "en"],
+            force_full_page_ocr=args.force_full_page_ocr,
+            confidence_threshold=args.easyocr_confidence_threshold,
+        )
+    elif args.ocr_engine == "ocrmac":
+        pdf_options.ocr_options = OcrMacOptions(
+            lang=langs if langs else ["vi-VN", "en-US"],
+            force_full_page_ocr=args.force_full_page_ocr,
+            recognition=args.ocrmac_recognition,
+        )
+    else:
+        pdf_options.ocr_options = TesseractCliOcrOptions(
+            lang=langs if langs else ["vie", "eng"],
+            force_full_page_ocr=args.force_full_page_ocr,
+            psm=args.ocr_psm,
+        )
+
     return DocumentConverter(
         format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=pdf_options)}
     )
@@ -179,10 +236,7 @@ def main() -> int:
         print(f"No supported files found in: {input_dir}")
         return 0
 
-    converter = build_converter(
-        enable_ocr=args.enable_ocr,
-        force_full_page_ocr=args.force_full_page_ocr,
-    )
+    converter = build_converter(args)
     conn = sqlite3.connect(db_path)
     init_db(conn)
 
