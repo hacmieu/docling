@@ -1,5 +1,7 @@
-# Local OwnCloud + PostgreSQL catalog for OCR pipeline.
-# Postgres uses host port 5433 to avoid conflict with other local Postgres (e.g. 5432).
+# Local OwnCloud Infinite Scale (OCIS) + PostgreSQL catalog.
+# Product: ownCloud GmbH — NOT Nextcloud (fork).
+# Latest production line: Infinite Scale 8.x (image owncloud/ocis:8.0.4).
+# Postgres uses host port 5433 to avoid conflict with other local Postgres.
 
 services:
   ocr-postgres:
@@ -21,40 +23,26 @@ services:
       timeout: 5s
       retries: 10
 
-  owncloud-mysql:
-    image: mariadb:10.11
-    container_name: ocr-owncloud-mysql
+  ocis:
+    image: owncloud/ocis:8.0.4
+    container_name: ocr-owncloud-ocis
     restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: owncloud
-      MYSQL_USER: owncloud
-      MYSQL_PASSWORD: owncloud
-      MYSQL_DATABASE: owncloud
-    volumes:
-      - owncloud_mysql_data:/var/lib/mysql
-
-  owncloud:
-    image: owncloud/server:10.15
-    container_name: ocr-owncloud
-    restart: unless-stopped
-    depends_on:
-      - owncloud-mysql
     ports:
-      - "8088:8080"
+      - "9200:9200"
     environment:
-      OWNCLOUD_DOMAIN: localhost:8088
-      OWNCLOUD_TRUSTED_DOMAINS: localhost
-      OWNCLOUD_ADMIN_USERNAME: admin
-      OWNCLOUD_ADMIN_PASSWORD: admin
-      OWNCLOUD_DB_TYPE: mysql
-      OWNCLOUD_DB_NAME: owncloud
-      OWNCLOUD_DB_USERNAME: owncloud
-      OWNCLOUD_DB_PASSWORD: owncloud
-      OWNCLOUD_DB_HOST: owncloud-mysql
+      OCIS_INSECURE: "true"
+      OCIS_URL: "https://localhost:9200"
+      PROXY_HTTP_ADDR: "0.0.0.0:9200"
+      OCIS_LOG_LEVEL: info
+      PROXY_ENABLE_BASIC_AUTH: "true"
+      IDM_ADMIN_PASSWORD: "admin"
     volumes:
-      - owncloud_data:/mnt/data
+      - ocis_config:/etc/ocis
+      - ocis_data:/var/lib/ocis
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["ocis init --insecure yes 2>/dev/null || true; exec ocis server"]
 
 volumes:
   ocr_pg_data:
-  owncloud_mysql_data:
-  owncloud_data:
+  ocis_config:
+  ocis_data:

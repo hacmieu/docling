@@ -41,10 +41,15 @@ def parse_args() -> argparse.Namespace:
 
 def owncloud_config() -> dict[str, str]:
     load_dotenv()
-    base = os.environ.get("OWNCLOUD_URL", "http://127.0.0.1:8088").rstrip("/")
+    base = os.environ.get("OWNCLOUD_URL", "https://127.0.0.1:9200").rstrip("/")
     user = os.environ.get("OWNCLOUD_USER", "admin")
     password = os.environ.get("OWNCLOUD_PASSWORD", "admin")
-    return {"base": base, "user": user, "password": password}
+    insecure = os.environ.get("OWNCLOUD_INSECURE", "true").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    return {"base": base, "user": user, "password": password, "insecure": insecure}
 
 
 def dav_root(cfg: dict[str, str]) -> str:
@@ -68,6 +73,7 @@ def list_remote_files(cfg: dict[str, str], prefix: str) -> list[str]:
         auth=(cfg["user"], cfg["password"]),
         headers={"Depth": "infinity"},
         timeout=120,
+        verify=not cfg["insecure"],
     )
     response.raise_for_status()
     paths: list[str] = []

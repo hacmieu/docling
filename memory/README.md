@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260625_1801-owncloud-ocis-not-nextcloud.md](./20260625_1801-owncloud-ocis-not-nextcloud.md): Clarified ownCloud vs Nextcloud; migrated infra target to OCIS 8.0.4.
 - [20260625_1753-owncloud-postgres-rollout.md](./20260625_1753-owncloud-postgres-rollout.md): OwnCloud local + PostgreSQL SoT rollout with AI metadata enrichment design.
 - [20260625_1743-architecture-direction-discussion.md](./20260625_1743-architecture-direction-discussion.md): Advisory on metadata-first catalog with Nextcloud and low-cost AI usage.
 - [20260625_1731-ai-review-deepseek-default-group.md](./20260625_1731-ai-review-deepseek-default-group.md): AI review columns, DeepSeek default-group model, 23/23 success.
