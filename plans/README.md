@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260625_1829-hth-shared-drive-next-steps.md](./20260625_1829-hth-shared-drive-next-steps.md): Checklist sau sync HTH-Shared-Drive (OCR batch là bước kế).
 - [20260625_1819-hung-thinh-dept-cloud-plan.md](./20260625_1819-hung-thinh-dept-cloud-plan.md): Kế hoạch triển khai Cloud theo phòng ban cho BV Hưng Thịnh.
 - [20260625_1815-ocis-project-space-plan.md](./20260625_1815-ocis-project-space-plan.md): Kế hoạch tạo Project Space (Shared Drive) và chỉnh sync OCR.
 - [20260625_1801-ocis-migration-checklist.md](./20260625_1801-ocis-migration-checklist.md): Checklist after switching from legacy ownCloud Server to OCIS 8.0.4.

@@ -36,7 +36,17 @@ docker stop ocr-owncloud ocr-owncloud-mysql 2>/dev/null || true
 ## Commands
 
 ```bash
-uv run python scripts/owncloud_sync_catalog.py --remote-prefix /OCR
+# Personal space (legacy /Yen)
+uv run python scripts/owncloud_sync_catalog.py --remote-prefix /Yen
+
+# Project Space HTH Shared Drive (khuyến nghị)
+uv run python scripts/owncloud_sync_catalog.py --drive-alias project/hth-shared-drive
+
+# Chỉ một phòng ban trong shared drive
+uv run python scripts/owncloud_sync_catalog.py \
+  --drive-alias project/hth-shared-drive \
+  --remote-prefix "/Truyền Thông/7.PHỤ SẢN"
+```
 uv run python scripts/migrate_sqlite_to_postgres.py
 uv run python scripts/ai_enrich_documents.py --sleep-seconds 6
 uv run python scripts/import_verified_metadata.py \

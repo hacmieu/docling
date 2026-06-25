@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260625_1829-hth-shared-drive-sync-report.md](./20260625_1829-hth-shared-drive-sync-report.md): Sync 491 file từ OCIS project/hth-shared-drive vào Postgres.
 - [20260625_1819-hung-thinh-hospital-advisory-report.md](./20260625_1819-hung-thinh-hospital-advisory-report.md): Tư vấn Cloud + AI + collaboration cho Bệnh viện Hưng Thịnh.
 - [20260625_1815-ocis-shared-drive-advisory-report.md](./20260625_1815-ocis-shared-drive-advisory-report.md): Advisory report — OCIS Project Spaces vs Google/SharePoint shared drives.
 - [20260625_1802-ocis-legacy-cleanup-report.md](./20260625_1802-ocis-legacy-cleanup-report.md): Started OCIS on 9200; removed legacy ownCloud Server stack and volumes.

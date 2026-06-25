@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260625_1829-hth-shared-drive-synced.md](./20260625_1829-hth-shared-drive-synced.md): Project Space HTH-Shared-Drive sync 491 file vào Postgres catalog.
 - [20260625_1819-hung-thinh-hospital-context.md](./20260625_1819-hung-thinh-hospital-context.md): Bối cảnh BV Hưng Thịnh — cloud phòng ban cho AI và collaboration.
 - [20260625_1815-ocis-shared-drive-spaces.md](./20260625_1815-ocis-shared-drive-spaces.md): OCIS Project Spaces tương đương Google Shared Drive / SharePoint; khuyến nghị dùng cho OCR team.
 - [20260625_1801-owncloud-ocis-not-nextcloud.md](./20260625_1801-owncloud-ocis-not-nextcloud.md): Clarified ownCloud vs Nextcloud; migrated infra target to OCIS 8.0.4.

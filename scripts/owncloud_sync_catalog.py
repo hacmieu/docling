@@ -10,7 +10,7 @@ import sys
 import xml.etree.ElementTree as ET
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
-from urllib.parse import quote, urljoin
+from urllib.parse import quote, unquote, urljoin
 
 import requests
 
@@ -28,7 +28,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--remote-prefix",
         default="/",
-        help="Remote folder under OwnCloud user root (default: /).",
+        help="Folder under the drive root (default: /).",
+    )
+    parser.add_argument(
+        "--drive-alias",
+        default=None,
+        help="OCIS drive alias, e.g. project/hth-shared-drive (uses personal space if omitted).",
     )
     parser.add_argument(
         "--local-sync-dir",
@@ -56,6 +61,38 @@ def dav_root(cfg: dict[str, str]) -> str:
     return f"{cfg['base']}/remote.php/dav/files/{quote(cfg['user'])}/"
 
 
+def resolve_drive(cfg: dict[str, str], drive_alias: str | None) -> dict[str, str]:
+    if drive_alias is None:
+        personal_href = f"/remote.php/dav/files/{cfg['user']}/"
+        return {
+            "alias": f"personal/{cfg['user']}",
+            "dav_href_prefix": personal_href,
+            "href_marker": f"/files/{cfg['user']}/",
+        }
+
+    response = requests.get(
+        f"{cfg['base']}/graph/v1beta1/me/drives",
+        auth=(cfg["user"], cfg["password"]),
+        timeout=60,
+        verify=not cfg["insecure"],
+    )
+    response.raise_for_status()
+    for drive in response.json().get("value", []):
+        if drive.get("driveAlias") == drive_alias:
+            web_dav_url = drive.get("root", {}).get("webDavUrl", "")
+            if not web_dav_url:
+                break
+            dav_path = web_dav_url.removeprefix(cfg["base"])
+            if not dav_path.endswith("/"):
+                dav_path += "/"
+            return {
+                "alias": drive_alias,
+                "dav_href_prefix": dav_path,
+                "href_marker": dav_path,
+            }
+    raise SystemExit(f"Drive alias not found: {drive_alias}")
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as f:
@@ -64,16 +101,20 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def list_remote_files(cfg: dict[str, str], prefix: str) -> list[str]:
+def list_remote_files(
+    cfg: dict[str, str],
+    drive: dict[str, str],
+    prefix: str,
+) -> list[str]:
     """List files under prefix via WebDAV PROPFIND (OCIS rejects Depth: infinity)."""
-    root = dav_root(cfg)
-    start_href = urljoin(f"/remote.php/dav/files/{cfg['user']}/", prefix.lstrip("/"))
+    start_href = urljoin(drive["dav_href_prefix"], prefix.lstrip("/"))
     if not start_href.endswith("/"):
         start_href += "/"
 
     dirs_to_scan: list[str] = [start_href]
     file_paths: list[str] = []
     seen_dirs: set[str] = set()
+    skip_names = {".space"}
 
     while dirs_to_scan:
         target_href = dirs_to_scan.pop()
@@ -99,12 +140,19 @@ def list_remote_files(cfg: dict[str, str], prefix: str) -> list[str]:
                 continue
             href = href_el.text
             if href.endswith("/"):
+                name = href.rstrip("/").rsplit("/", 1)[-1]
+                if name in skip_names:
+                    continue
                 if href != target_href and href not in seen_dirs:
                     dirs_to_scan.append(href)
                 continue
-            rel = href.split(f"/files/{cfg['user']}/", 1)[-1]
-            rel = "/" + rel.lstrip("/")
-            file_paths.append(rel)
+            rel = unquote(href.split(drive["href_marker"], 1)[-1].lstrip("/"))
+            if not rel or rel.split("/", 1)[0] in skip_names:
+                continue
+            if drive["alias"].startswith("personal/"):
+                file_paths.append("/" + rel)
+            else:
+                file_paths.append(f"{drive['alias']}/{rel}")
 
     return sorted(set(file_paths))
 
@@ -143,8 +191,9 @@ def upsert_catalog_row(
 def main() -> int:
     args = parse_args()
     cfg = owncloud_config()
+    drive = resolve_drive(cfg, args.drive_alias)
     now = datetime.now(UTC)
-    remote_files = list_remote_files(cfg, args.remote_prefix)
+    remote_files = list_remote_files(cfg, drive, args.remote_prefix)
     if not remote_files:
         print("No remote files found.")
         return 0
