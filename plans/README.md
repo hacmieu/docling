@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260625_1753-owncloud-postgres-pdca-plan.md](./20260625_1753-owncloud-postgres-pdca-plan.md): PDCA plan/check/act for OwnCloud sync, Postgres SoT, AI enrich, verified backfill.
 - [20260625_1743-low-cost-search-architecture-plan.md](./20260625_1743-low-cost-search-architecture-plan.md): Phased plan for metadata, FTS, tags, and AI-on-subset retrieval.
 - [20260625_1731-ai-api-usage-plan.md](./20260625_1731-ai-api-usage-plan.md): API group/model policy for text OCR review vs image models.
 - [20260625_1705-quality-ocr-operation-plan.md](./20260625_1705-quality-ocr-operation-plan.md): Quality-first EasyOCR operational preset and run discipline.

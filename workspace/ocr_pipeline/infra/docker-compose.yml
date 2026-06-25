@@ -1,0 +1,60 @@
+# Local OwnCloud + PostgreSQL catalog for OCR pipeline.
+# Postgres uses host port 5433 to avoid conflict with other local Postgres (e.g. 5432).
+
+services:
+  ocr-postgres:
+    image: postgres:16-alpine
+    container_name: ocr-pipeline-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ocr
+      POSTGRES_PASSWORD: ocr
+      POSTGRES_DB: ocr_catalog
+    volumes:
+      - ocr_pg_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ocr -d ocr_catalog"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  owncloud-mysql:
+    image: mariadb:10.11
+    container_name: ocr-owncloud-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: owncloud
+      MYSQL_USER: owncloud
+      MYSQL_PASSWORD: owncloud
+      MYSQL_DATABASE: owncloud
+    volumes:
+      - owncloud_mysql_data:/var/lib/mysql
+
+  owncloud:
+    image: owncloud/server:10.15
+    container_name: ocr-owncloud
+    restart: unless-stopped
+    depends_on:
+      - owncloud-mysql
+    ports:
+      - "8088:8080"
+    environment:
+      OWNCLOUD_DOMAIN: localhost:8088
+      OWNCLOUD_TRUSTED_DOMAINS: localhost
+      OWNCLOUD_ADMIN_USERNAME: admin
+      OWNCLOUD_ADMIN_PASSWORD: admin
+      OWNCLOUD_DB_TYPE: mysql
+      OWNCLOUD_DB_NAME: owncloud
+      OWNCLOUD_DB_USERNAME: owncloud
+      OWNCLOUD_DB_PASSWORD: owncloud
+      OWNCLOUD_DB_HOST: owncloud-mysql
+    volumes:
+      - owncloud_data:/mnt/data
+
+volumes:
+  ocr_pg_data:
+  owncloud_mysql_data:
+  owncloud_data:

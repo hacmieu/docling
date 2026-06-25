@@ -1,0 +1,14 @@
+[
+  {
+    "owncloud_path": "/OCR/CCCD_0001.pdf",
+    "verified_at": "2024-03-01T00:00:00Z",
+    "verified_source": "legacy_hr_system",
+    "category": "giay_to_tuy_than",
+    "tags": ["cccd", "verified"],
+    "verified_metadata": {
+      "ho_ten": "NGUYEN VAN A",
+      "so_cccd": "001234567890",
+      "ngay_cap": "2020-01-15"
+    }
+  }
+]
