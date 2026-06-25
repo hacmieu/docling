@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260625_1840-catalog-prune-ui-report.md](./20260625_1840-catalog-prune-ui-report.md): Dọn 991→498 row; UI tiếng Việt; prune/dedupe sync.
 - [20260625_1834-postgres-catalog-webapp-report.md](./20260625_1834-postgres-catalog-webapp-report.md): Triển khai webapp Postgres catalog (table list + detail).
 - [20260625_1829-hth-shared-drive-sync-report.md](./20260625_1829-hth-shared-drive-sync-report.md): Sync 491 file từ OCIS project/hth-shared-drive vào Postgres.
 - [20260625_1819-hung-thinh-hospital-advisory-report.md](./20260625_1819-hung-thinh-hospital-advisory-report.md): Tư vấn Cloud + AI + collaboration cho Bệnh viện Hưng Thịnh.

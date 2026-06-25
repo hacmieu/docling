@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260625_1840-catalog-prune-vietnamese-ui.md](./20260625_1840-catalog-prune-vietnamese-ui.md): Prune/dedupe catalog; sửa font tiếng Việt trên webapp Postgres.
 - [20260625_1834-postgres-catalog-webapp.md](./20260625_1834-postgres-catalog-webapp.md): Webapp PostgreSQL table list + detail trên port 8766.
 - [20260625_1829-hth-shared-drive-synced.md](./20260625_1829-hth-shared-drive-synced.md): Project Space HTH-Shared-Drive sync 491 file vào Postgres catalog.
 - [20260625_1819-hung-thinh-hospital-context.md](./20260625_1819-hung-thinh-hospital-context.md): Bối cảnh BV Hưng Thịnh — cloud phòng ban cho AI và collaboration.

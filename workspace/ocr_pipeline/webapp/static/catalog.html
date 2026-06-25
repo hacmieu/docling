@@ -4,10 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>HTH OCR Catalog — PostgreSQL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
         color-scheme: light;
-        font-family: Inter, system-ui, Arial, sans-serif;
+        font-family: "Be Vietnam Pro", "Noto Sans", system-ui, sans-serif;
         --bg: #f1f5f9;
         --panel: #ffffff;
         --border: #dbe3ef;
@@ -17,7 +23,7 @@
         --accent-soft: #eff6ff;
       }
       * { box-sizing: border-box; }
-      body { margin: 0; background: var(--bg); color: var(--text); }
+      body { margin: 0; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.45; }
       header {
         padding: 14px 18px;
         background: var(--panel);
@@ -83,8 +89,15 @@
       tbody tr { cursor: pointer; }
       tbody tr:hover { background: #f8fafc; }
       tbody tr.active { background: var(--accent-soft); }
-      .file-name { font-weight: 600; word-break: break-word; }
-      .path { color: var(--muted); font-size: 12px; max-width: 280px; word-break: break-all; }
+      .file-name { font-weight: 600; word-break: break-word; font-feature-settings: "locl" 1; }
+      .path {
+        color: var(--muted);
+        font-size: 12px;
+        max-width: 360px;
+        word-break: break-word;
+        white-space: normal;
+        line-height: 1.35;
+      }
       .badge {
         display: inline-block;
         font-size: 11px;
@@ -148,10 +161,14 @@
         <option value="pending">pending</option>
       </select>
       <select id="drive">
+        <option value="project/hth-shared-drive" selected>HTH-Shared-Drive (chính)</option>
         <option value="">Tất cả drives</option>
-        <option value="project/hth-shared-drive">HTH-Shared-Drive</option>
-        <option value="/Yen">Personal /Yen</option>
+        <option value="/Yen">Personal /Yen (cũ)</option>
       </select>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
+        <input type="checkbox" id="hideHidden" checked />
+        Ẩn file rác (.DS_Store)
+      </label>
       <button class="primary" id="reload">Tải lại</button>
     </div>
 
@@ -192,6 +209,7 @@
       const searchEl = document.getElementById("search");
       const statusEl = document.getElementById("status");
       const driveEl = document.getElementById("drive");
+      const hideHiddenEl = document.getElementById("hideHidden");
       const reloadBtn = document.getElementById("reload");
       const prevBtn = document.getElementById("prev");
       const nextBtn = document.getElementById("next");
@@ -222,7 +240,7 @@
         const data = await res.json();
         const s = data.stats;
         statsEl.textContent =
-          `Tổng=${s.total} | cataloged=${s.cataloged} | OCR ok=${s.success} | lỗi=${s.failure} | AI=${s.ai_reviewed} | HTH-Shared=${s.hth_shared} | avg_md=${Math.round(s.avg_markdown_len)}`;
+          `HTH-Shared=${s.hth_shared} | tổng DB=${s.total} | legacy /Yen=${s.legacy_yen} | .DS_Store=${s.dotfiles} | OCR ok=${s.success} | cataloged=${s.cataloged}`;
       }
 
       function queryParams() {
@@ -232,6 +250,7 @@
         if (searchEl.value.trim()) q.set("q", searchEl.value.trim());
         if (statusEl.value) q.set("status", statusEl.value);
         if (driveEl.value) q.set("drive", driveEl.value);
+        if (!hideHiddenEl.checked) q.set("exclude_hidden", "0");
         return q;
       }
 
@@ -241,6 +260,9 @@
         const items = data.items || [];
         total = data.total || 0;
         rowsEl.innerHTML = "";
+        if (items.length === 0) {
+          rowsEl.innerHTML = `<tr><td colspan="8" class="hint">Không có bản ghi. Thử bỏ bộ lọc hoặc chạy sync + --prune-missing.</td></tr>`;
+        }
         for (const item of items) {
           const tr = document.createElement("tr");
           if (item.id === activeId) tr.classList.add("active");
@@ -260,7 +282,7 @@
         }
         const from = total === 0 ? 0 : offset + 1;
         const to = Math.min(offset + pageSize, total);
-        pagerInfoEl.textContent = `${from}–${to} / ${total}`;
+        pagerInfoEl.textContent = `${from}–${to} / ${total} (đang lọc)`;
         prevBtn.disabled = offset <= 0;
         nextBtn.disabled = offset + pageSize >= total;
       }
@@ -313,6 +335,7 @@ ${escapeHtml(d.ai_review || "(chưa có)")}</pre></div>
       searchEl.onkeydown = (e) => { if (e.key === "Enter") { offset = 0; refreshAll(); } };
       statusEl.onchange = () => { offset = 0; refreshAll(); };
       driveEl.onchange = () => { offset = 0; refreshAll(); };
+      hideHiddenEl.onchange = () => { offset = 0; refreshAll(); };
       prevBtn.onclick = () => { offset = Math.max(0, offset - pageSize); fetchTable(); };
       nextBtn.onclick = () => { offset += pageSize; fetchTable(); };
 

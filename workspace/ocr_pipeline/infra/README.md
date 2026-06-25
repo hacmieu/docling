@@ -40,7 +40,7 @@ docker stop ocr-owncloud ocr-owncloud-mysql 2>/dev/null || true
 uv run python scripts/owncloud_sync_catalog.py --remote-prefix /Yen
 
 # Project Space HTH Shared Drive (khuyến nghị)
-uv run python scripts/owncloud_sync_catalog.py --drive-alias project/hth-shared-drive
+uv run python scripts/owncloud_sync_catalog.py --drive-alias project/hth-shared-drive --prune-missing
 
 # Chỉ một phòng ban trong shared drive
 uv run python scripts/owncloud_sync_catalog.py \

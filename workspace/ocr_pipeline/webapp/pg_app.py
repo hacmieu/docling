@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import unicodedata
 from datetime import date, datetime
 from decimal import Decimal
 from http import HTTPStatus
@@ -49,6 +50,12 @@ def serialize_row(row: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def display_path(path: str | None) -> str | None:
+    if not path:
+        return path
+    return unicodedata.normalize("NFC", unquote(path))
+
+
 class PgCatalogDb:
     def stats(self) -> dict[str, Any]:
         with connect() as conn:
@@ -63,7 +70,16 @@ class PgCatalogDb:
                     SUM(CASE WHEN ai_review_status = 'success' THEN 1 ELSE 0 END) AS ai_reviewed,
                     SUM(
                         CASE WHEN owncloud_path LIKE 'project/hth-shared-drive%' THEN 1 ELSE 0 END
-                    ) AS hth_shared
+                    ) AS hth_shared,
+                    SUM(
+                        CASE WHEN owncloud_path LIKE '/Yen%' THEN 1 ELSE 0 END
+                    ) AS legacy_yen,
+                    SUM(
+                        CASE
+                            WHEN owncloud_path ILIKE '%.DS_Store' THEN 1
+                            ELSE 0
+                        END
+                    ) AS dotfiles
                 FROM documents
                 """
             ).fetchone()
@@ -75,6 +91,8 @@ class PgCatalogDb:
             "avg_markdown_len": float(row[4] or 0),
             "ai_reviewed": int(row[5] or 0),
             "hth_shared": int(row[6] or 0),
+            "legacy_yen": int(row[7] or 0),
+            "dotfiles": int(row[8] or 0),
         }
 
     def list_documents(
@@ -84,6 +102,7 @@ class PgCatalogDb:
         status: str | None,
         query: str | None,
         drive: str | None,
+        exclude_hidden: bool = True,
     ) -> tuple[list[dict[str, Any]], int]:
         filters: list[str] = []
         params: list[Any] = []
@@ -99,6 +118,9 @@ class PgCatalogDb:
         if drive:
             filters.append("owncloud_path LIKE %s")
             params.append(f"{drive}%")
+        if exclude_hidden:
+            filters.append("owncloud_path NOT ILIKE %s")
+            params.append("%.DS_Store")
         where = f"WHERE {' AND '.join(filters)}" if filters else ""
 
         count_sql = f"SELECT COUNT(*) FROM documents {where}"
@@ -129,8 +151,8 @@ class PgCatalogDb:
             items.append(
                 {
                     "id": row[0],
-                    "owncloud_path": unquote(row[1]) if row[1] else row[1],
-                    "source_path": row[2],
+                    "owncloud_path": display_path(row[1]),
+                    "source_path": display_path(row[2]),
                     "status": row[3],
                     "created_at": row[4],
                     "updated_at": row[5],
@@ -189,8 +211,9 @@ class PgCatalogDb:
             "verified_source",
         ]
         doc = dict(zip(columns, row, strict=True))
-        if doc.get("owncloud_path"):
-            doc["owncloud_path"] = unquote(doc["owncloud_path"])
+        doc["owncloud_path"] = display_path(doc.get("owncloud_path"))
+        doc["source_path"] = display_path(doc.get("source_path"))
+        doc["local_path"] = display_path(doc.get("local_path"))
         return serialize_row(doc)
 
 
@@ -242,12 +265,18 @@ def build_handler(db: PgCatalogDb, static_dir: Path):
                 status = qs.get("status", [None])[0]
                 query = qs.get("q", [None])[0]
                 drive = qs.get("drive", [None])[0]
+                exclude_hidden = qs.get("exclude_hidden", ["1"])[0] not in (
+                    "0",
+                    "false",
+                    "no",
+                )
                 items, total = db.list_documents(
                     limit=limit,
                     offset=offset,
                     status=status,
                     query=query,
                     drive=drive,
+                    exclude_hidden=exclude_hidden,
                 )
                 self._send_json(
                     {

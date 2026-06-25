@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import os
 import sys
+import unicodedata
 import xml.etree.ElementTree as ET
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
@@ -41,7 +42,28 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional local OwnCloud sync folder; used to compute sha256 when file exists.",
     )
+    parser.add_argument(
+        "--prune-missing",
+        action="store_true",
+        help="Remove catalog rows under this drive that no longer exist on OCIS.",
+    )
+    parser.add_argument(
+        "--skip-hidden",
+        action="store_true",
+        default=True,
+        help="Skip dotfiles like .DS_Store (default: true).",
+    )
+    parser.add_argument(
+        "--no-skip-hidden",
+        action="store_false",
+        dest="skip_hidden",
+        help="Include dotfiles in sync.",
+    )
     return parser.parse_args()
+
+
+def normalize_path(path: str) -> str:
+    return unicodedata.normalize("NFC", unquote(path))
 
 
 def owncloud_config() -> dict[str, str]:
@@ -93,6 +115,18 @@ def resolve_drive(cfg: dict[str, str], drive_alias: str | None) -> dict[str, str
     raise SystemExit(f"Drive alias not found: {drive_alias}")
 
 
+def catalog_path_for_drive(drive: dict[str, str], rel: str) -> str:
+    if drive["alias"].startswith("personal/"):
+        return normalize_path("/" + rel)
+    return normalize_path(f"{drive['alias']}/{rel}")
+
+
+def path_prefix_for_drive(drive: dict[str, str]) -> str:
+    if drive["alias"].startswith("personal/"):
+        return "/"
+    return f"{drive['alias']}/"
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as f:
@@ -105,6 +139,8 @@ def list_remote_files(
     cfg: dict[str, str],
     drive: dict[str, str],
     prefix: str,
+    *,
+    skip_hidden: bool = True,
 ) -> list[str]:
     """List files under prefix via WebDAV PROPFIND (OCIS rejects Depth: infinity)."""
     start_href = urljoin(drive["dav_href_prefix"], prefix.lstrip("/"))
@@ -149,12 +185,71 @@ def list_remote_files(
             rel = unquote(href.split(drive["href_marker"], 1)[-1].lstrip("/"))
             if not rel or rel.split("/", 1)[0] in skip_names:
                 continue
-            if drive["alias"].startswith("personal/"):
-                file_paths.append("/" + rel)
-            else:
-                file_paths.append(f"{drive['alias']}/{rel}")
+            base_name = rel.rsplit("/", 1)[-1]
+            if skip_hidden and base_name.startswith("."):
+                continue
+            file_paths.append(catalog_path_for_drive(drive, rel))
 
     return sorted(set(file_paths))
+
+
+def dedupe_catalog_paths(conn, drive: dict[str, str]) -> int:
+    """Keep one row per normalized owncloud_path under this drive."""
+    prefix = path_prefix_for_drive(drive)
+    rows = conn.execute(
+        """
+        SELECT id, owncloud_path
+        FROM documents
+        WHERE owncloud_path LIKE %s
+        ORDER BY id
+        """,
+        (f"{prefix}%",),
+    ).fetchall()
+    seen: set[str] = set()
+    removed = 0
+    for doc_id, owncloud_path in rows:
+        key = normalize_path(owncloud_path or "")
+        if key in seen:
+            conn.execute("DELETE FROM documents WHERE id = %s", (doc_id,))
+            removed += 1
+            print(f"[DEDUPE] {key}")
+            continue
+        seen.add(key)
+    return removed
+
+
+def prune_missing_rows(
+    conn,
+    drive: dict[str, str],
+    remote_prefix: str,
+    remote_paths: set[str],
+) -> int:
+    """Drop catalog rows under this drive scope that are absent from OCIS."""
+    scope_prefix = path_prefix_for_drive(drive)
+    if remote_prefix and remote_prefix != "/":
+        scope_prefix = catalog_path_for_drive(
+            drive, remote_prefix.lstrip("/").rstrip("/") + "/x"
+        ).rsplit("/", 1)[0] + "/"
+    elif not scope_prefix.endswith("/"):
+        scope_prefix += "/"
+
+    rows = conn.execute(
+        """
+        SELECT id, owncloud_path
+        FROM documents
+        WHERE owncloud_path LIKE %s OR owncloud_path = %s
+        """,
+        (f"{scope_prefix}%", scope_prefix.rstrip("/")),
+    ).fetchall()
+
+    removed = 0
+    for doc_id, owncloud_path in rows:
+        normalized = normalize_path(owncloud_path or "")
+        if normalized not in remote_paths:
+            conn.execute("DELETE FROM documents WHERE id = %s", (doc_id,))
+            removed += 1
+            print(f"[PRUNE] {normalized}")
+    return removed
 
 
 def upsert_catalog_row(
@@ -193,12 +288,23 @@ def main() -> int:
     cfg = owncloud_config()
     drive = resolve_drive(cfg, args.drive_alias)
     now = datetime.now(UTC)
-    remote_files = list_remote_files(cfg, drive, args.remote_prefix)
+    remote_files = list_remote_files(
+        cfg, drive, args.remote_prefix, skip_hidden=args.skip_hidden
+    )
+    remote_set = set(remote_files)
     if not remote_files:
         print("No remote files found.")
+        if args.prune_missing:
+            with connect() as conn:
+                removed = prune_missing_rows(
+                    conn, drive, args.remote_prefix, remote_set
+                )
+            print(f"Pruned stale catalog rows: {removed}")
         return 0
 
     synced = 0
+    removed = 0
+    deduped = 0
     with connect() as conn:
         for owncloud_path in remote_files:
             local_path: str | None = None
@@ -212,7 +318,16 @@ def main() -> int:
             synced += 1
             print(f"[SYNC] {owncloud_path}")
 
-    print(f"Completed OwnCloud catalog sync. files={synced}")
+        if args.prune_missing:
+            removed = prune_missing_rows(
+                conn, drive, args.remote_prefix, remote_set
+            )
+        deduped = dedupe_catalog_paths(conn, drive)
+
+    print(
+        f"Completed OwnCloud catalog sync. files={synced} "
+        f"pruned={removed} deduped={deduped}"
+    )
     return 0
 
 
