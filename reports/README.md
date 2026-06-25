@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260625_2319-concept-search-advisory-report.md](./20260625_2319-concept-search-advisory-report.md): Tư vấn tìm theo khái niệm (phạm vi hành nghề) — liệt kê 0 token, AI chỉ trên subset.
 - [20260625_2313-ai-category-tag-advisory-report.md](./20260625_2313-ai-category-tag-advisory-report.md): Tư vấn category/tag/label vs API email context — verdict: ổn nếu đi kèm lọc cấu trúc.
 - [20260625_2056-ocr-full-batch-sla-report.md](./20260625_2056-ocr-full-batch-sla-report.md): Full OCR 437 PDF — 78.2 phút, 10.7s/file, 447 PDF success tổng.
 - [20260625_1857-teable-integration-advisory-report.md](./20260625_1857-teable-integration-advisory-report.md): Tư vấn dùng Teable thay SPA; yêu cầu base/token/schema từ user.

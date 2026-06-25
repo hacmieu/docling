@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260625_2319-concept-search-narrowing.md](./20260625_2319-concept-search-narrowing.md): Thu hẹp không gian tìm kiếm — ví dụ «phạm vi hành nghề»; FTS + tag + concept map trước AI.
 - [20260625_2313-ai-category-tag-direction.md](./20260625_2313-ai-category-tag-direction.md): AI category/tag bổ sung API context kiểu email — không thay lớp lọc path/ngày/luồng.
 - [20260625_2056-ocr-full-batch-sla.md](./20260625_2056-ocr-full-batch-sla.md): Full OCR 437 PDF (~78 phút); Teable ENV placeholder trong .env.
 - [20260625_1857-teable-ui-instead-of-fe.md](./20260625_1857-teable-ui-instead-of-fe.md): Teable thay custom FE — sync Postgres→Teable API, không mount DB trực tiếp.
