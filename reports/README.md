@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260625_2056-ocr-full-batch-sla-report.md](./20260625_2056-ocr-full-batch-sla-report.md): Full OCR 437 PDF — 78.2 phút, 10.7s/file, 447 PDF success tổng.
 - [20260625_1857-teable-integration-advisory-report.md](./20260625_1857-teable-integration-advisory-report.md): Tư vấn dùng Teable thay SPA; yêu cầu base/token/schema từ user.
 - [20260625_1853-ocr-batch10-sla-report.md](./20260625_1853-ocr-batch10-sla-report.md): OCR pilot 10 PDF — 98.9s batch, 10/10 success, SLA JSON.
 - [20260625_1840-catalog-prune-ui-report.md](./20260625_1840-catalog-prune-ui-report.md): Dọn 991→498 row; UI tiếng Việt; prune/dedupe sync.

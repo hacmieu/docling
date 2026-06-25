@@ -45,7 +45,12 @@ class SlaRecord:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--limit", type=int, default=10, help="Max files to OCR.")
+    parser.add_argument("--limit", type=int, default=10, help="Max files to OCR (ignored if --all).")
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Process all pending cataloged documents (no limit).",
+    )
     parser.add_argument(
         "--drive-alias",
         default="project/hth-shared-drive",
@@ -155,11 +160,15 @@ def download_file(cfg: dict[str, str], drive: dict[str, str], rel_path: str, des
 
 def select_documents(
     drive_alias: str,
-    limit: int,
+    limit: int | None,
     only_pdf: bool,
 ) -> list[tuple[int, str]]:
     pattern = f"{drive_alias}%"
     suffix_clause = "AND lower(owncloud_path) LIKE '%%.pdf'" if only_pdf else ""
+    limit_clause = "" if limit is None else "LIMIT %s"
+    params: list[object] = [pattern]
+    if limit is not None:
+        params.append(limit)
     with connect() as conn:
         rows = conn.execute(
             f"""
@@ -171,9 +180,9 @@ def select_documents(
               AND owncloud_path NOT ILIKE '%%.DS_Store'
               {suffix_clause}
             ORDER BY id
-            LIMIT %s
+            {limit_clause}
             """,
-            (pattern, limit),
+            tuple(params),
         ).fetchall()
     return [(int(row[0]), normalize_path(row[1])) for row in rows]
 
@@ -255,7 +264,8 @@ def main() -> int:
     args = parse_args()
     cfg = owncloud_config()
     drive = resolve_drive(cfg, args.drive_alias)
-    candidates = select_documents(args.drive_alias, args.limit, args.only_pdf)
+    limit = None if args.all else args.limit
+    candidates = select_documents(args.drive_alias, limit, args.only_pdf)
     if not candidates:
         print("No cataloged documents pending OCR.")
         return 0

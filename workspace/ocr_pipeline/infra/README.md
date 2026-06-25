@@ -51,6 +51,12 @@ uv run python scripts/owncloud_sync_catalog.py \
 uv run python scripts/ocr_catalog_postgres.py --limit 10 \
   --ocr-engine easyocr --ocr-lang vi,en \
   --easyocr-confidence-threshold 0.25 --force-full-page-ocr
+
+# Full batch (tất cả PDF cataloged)
+uv run python scripts/ocr_catalog_postgres.py --all \
+  --ocr-engine easyocr --ocr-lang vi,en \
+  --easyocr-confidence-threshold 0.25 --force-full-page-ocr \
+  --sla-report workspace/ocr_pipeline/09_logs/YYYYMMDD_HHMM-ocr-full-sla.json
 uv run python scripts/ai_enrich_documents.py --sleep-seconds 6
 uv run python scripts/import_verified_metadata.py \
   --input-json workspace/ocr_pipeline/02_manifest/verified_backfill.sample.json
