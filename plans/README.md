@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260625_1731-ai-api-usage-plan.md](./20260625_1731-ai-api-usage-plan.md): API group/model policy for text OCR review vs image models.
 - [20260625_1705-quality-ocr-operation-plan.md](./20260625_1705-quality-ocr-operation-plan.md): Quality-first EasyOCR operational preset and run discipline.
 - [20260625_1652-ocr-spa-deployment-plan.md](./20260625_1652-ocr-spa-deployment-plan.md): Run/deploy steps for OCR SQLite SPA with port pre-check.
 - [20260625_1634-easyocr-as-baseline-plan.md](./20260625_1634-easyocr-as-baseline-plan.md): Adopt EasyOCR DB as current baseline and keep others for regression checks.

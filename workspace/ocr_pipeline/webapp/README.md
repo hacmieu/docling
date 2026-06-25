@@ -24,9 +24,14 @@ Open: `http://127.0.0.1:8765`
 uv run python workspace/ocr_pipeline/webapp/app.py --port 8765 --check-port-only
 ```
 
-## Custom DB
+## AI review (text, default API group)
+
+Use a **default-group** API key with a text model (e.g. `deepseek-v4-pro`).  
+Do not use `gemini-3-flash` for chat/text (image-only per provider policy). Codex group keys are for image models (~10 RPM).
 
 ```bash
-uv run python workspace/ocr_pipeline/webapp/app.py \
-  --db-path workspace/ocr_pipeline/08_sqlite/memory_tmp_vie_easyocr.db
+uv run python scripts/ai_review_sqlite.py --sleep-seconds 6
 ```
+
+Requires `.env` (see repo root `.env.example`).
+

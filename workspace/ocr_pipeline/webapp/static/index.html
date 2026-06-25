@@ -18,6 +18,10 @@
       .item:hover, .item.active { border-color: #3b82f6; background: #eff6ff; }
       .name { font-size: 13px; font-weight: 600; word-break: break-word; }
       .meta { font-size: 12px; color: #475569; margin-top: 6px; }
+      .badge { display: inline-block; font-size: 11px; padding: 2px 6px; border-radius: 999px; margin-left: 4px; }
+      .badge.ok { background: #dcfce7; color: #166534; }
+      .badge.fail { background: #fee2e2; color: #991b1b; }
+      .badge.pending { background: #e2e8f0; color: #334155; }
       .section { margin-bottom: 14px; }
       pre { background: #ffffff; border: 1px solid #d8e1ee; padding: 12px; border-radius: 10px; white-space: pre-wrap; word-break: break-word; }
       .hint { opacity: 0.8; font-size: 13px; }
@@ -57,7 +61,7 @@
         const res = await fetch("/api/stats");
         const data = await res.json();
         const s = data.stats;
-        statsEl.textContent = `total=${s.total} success=${s.success} failure=${s.failure} avg_markdown_len=${Math.round(s.avg_markdown_len)}`;
+        statsEl.textContent = `total=${s.total} success=${s.success} failure=${s.failure} ai_reviewed=${s.ai_reviewed || 0} avg_markdown_len=${Math.round(s.avg_markdown_len)}`;
       }
 
       async function fetchList() {
@@ -73,9 +77,14 @@
           const div = document.createElement("div");
           div.className = "item" + (item.id === activeId ? " active" : "");
           const fileName = item.source_path.split("/").pop();
+          const aiBadge = item.ai_review_status === "success"
+            ? '<span class="badge ok">AI ok</span>'
+            : item.ai_review_status === "failure"
+              ? '<span class="badge fail">AI fail</span>'
+              : '<span class="badge pending">AI pending</span>';
           div.innerHTML = `
             <div class="name">${fileName}</div>
-            <div class="meta">id=${item.id} | ${item.status} | md_len=${item.markdown_len || 0}</div>
+            <div class="meta">id=${item.id} | ${item.status} | md_len=${item.markdown_len || 0} ${aiBadge}</div>
           `;
           div.onclick = () => openDoc(item.id);
           listEl.appendChild(div);
@@ -96,6 +105,13 @@
           <div class="section"><b>Source</b><br/>${d.source_path}</div>
           <div class="section"><b>Status</b><br/>${d.status}</div>
           <div class="section"><b>SHA256</b><br/><code>${d.source_sha256}</code></div>
+          <div class="section"><b>AI Review</b><br/>
+            status=${d.ai_review_status || "pending"}
+            ${d.ai_review_at ? " | at=" + d.ai_review_at : ""}
+            ${d.ai_review_model ? " | model=" + d.ai_review_model : ""}
+            ${d.ai_review_error ? "<br/><span style='color:#b91c1c'>" + escapeHtml(d.ai_review_error) + "</span>" : ""}
+            <pre>${escapeHtml(d.ai_review || "(chưa có AI review)")}</pre>
+          </div>
           <div class="section"><b>Markdown</b><pre>${escapeHtml(d.markdown || "")}</pre></div>
           <div class="section"><b>Doc JSON (raw)</b><pre>${escapeHtml(d.doc_json || "")}</pre></div>
         `;

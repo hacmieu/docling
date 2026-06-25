@@ -26,3 +26,4 @@
 !webapp/app.py
 !webapp/static/
 !webapp/static/index.html
+!ocr_schema.py

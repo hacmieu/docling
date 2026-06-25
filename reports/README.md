@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260625_1731-ai-review-execution-report.md](./20260625_1731-ai-review-execution-report.md): AI review script rollout and DeepSeek batch execution results.
 - [20260625_1705-light-theme-rerun-report.md](./20260625_1705-light-theme-rerun-report.md): Execution report for light-theme update and quality OCR rerun.
 - [20260625_1652-ocr-spa-implementation-report.md](./20260625_1652-ocr-spa-implementation-report.md): SPA implementation and API smoke-test report.
 - [20260625_1634-active-db-selection-report.md](./20260625_1634-active-db-selection-report.md): Recorded active OCR database selection based on user preference.

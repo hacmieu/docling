@@ -6,12 +6,19 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+import sys
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from socket import socket
 from typing import Any
 from urllib.parse import parse_qs, urlparse
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from workspace.ocr_pipeline.ocr_schema import ensure_documents_schema
 
 
 def default_db_path() -> Path:
@@ -41,13 +48,15 @@ class OcrDb:
 
     def stats(self) -> dict[str, Any]:
         with self._connect() as conn:
+            ensure_documents_schema(conn)
             row = conn.execute(
                 """
                 SELECT
                     COUNT(*) AS total,
                     SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success,
                     SUM(CASE WHEN status = 'failure' THEN 1 ELSE 0 END) AS failure,
-                    AVG(LENGTH(markdown)) AS avg_markdown_len
+                    AVG(LENGTH(markdown)) AS avg_markdown_len,
+                    SUM(CASE WHEN ai_review_status = 'success' THEN 1 ELSE 0 END) AS ai_reviewed
                 FROM documents
                 """
             ).fetchone()
@@ -56,6 +65,7 @@ class OcrDb:
             "success": int(row["success"] or 0),
             "failure": int(row["failure"] or 0),
             "avg_markdown_len": float(row["avg_markdown_len"] or 0),
+            "ai_reviewed": int(row["ai_reviewed"] or 0),
         }
 
     def list_documents(
@@ -78,7 +88,8 @@ class OcrDb:
                 created_at,
                 updated_at,
                 LENGTH(markdown) AS markdown_len,
-                source_sha256
+                source_sha256,
+                ai_review_status
             FROM documents
             {where}
             ORDER BY updated_at DESC, id DESC
@@ -95,7 +106,8 @@ class OcrDb:
                 """
                 SELECT
                     id, source_path, source_sha256, status, error_message,
-                    created_at, updated_at, markdown, doc_json
+                    created_at, updated_at, markdown, doc_json,
+                    ai_review, ai_review_status, ai_review_at, ai_review_model, ai_review_error
                 FROM documents
                 WHERE id = ?
                 """,
@@ -197,6 +209,9 @@ def main() -> int:
         return 0
 
     db = OcrDb(db_path)
+    with db._connect() as conn:
+        ensure_documents_schema(conn)
+        conn.commit()
     handler = build_handler(db, static_dir)
     server = ThreadingHTTPServer((args.host, args.port), handler)
     print(f"Serving SQLite webapp at http://{args.host}:{args.port}")
