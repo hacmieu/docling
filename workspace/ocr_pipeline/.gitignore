@@ -24,8 +24,10 @@
 !09_logs/.gitkeep
 !webapp/README.md
 !webapp/app.py
+!webapp/pg_app.py
 !webapp/static/
 !webapp/static/index.html
+!webapp/static/catalog.html
 !ocr_schema.py
 !db_postgres.py
 !requirements-pipeline.txt

@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HTH OCR Catalog — PostgreSQL</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, system-ui, Arial, sans-serif;
+        --bg: #f1f5f9;
+        --panel: #ffffff;
+        --border: #dbe3ef;
+        --text: #0f172a;
+        --muted: #64748b;
+        --accent: #2563eb;
+        --accent-soft: #eff6ff;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); }
+      header {
+        padding: 14px 18px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+      }
+      h1 { margin: 0 0 4px; font-size: 18px; }
+      .sub { color: var(--muted); font-size: 13px; }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px 18px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+      }
+      input, select, button {
+        background: #fff;
+        color: var(--text);
+        border: 1px solid #cbd5e1;
+        padding: 8px 10px;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+      button { cursor: pointer; }
+      button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+      .stats {
+        padding: 8px 18px;
+        font-size: 12px;
+        color: var(--muted);
+        background: #fff;
+        border-bottom: 1px solid var(--border);
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+        gap: 0;
+        min-height: calc(100vh - 140px);
+      }
+      .table-wrap {
+        overflow: auto;
+        background: var(--panel);
+        border-right: 1px solid var(--border);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      thead th {
+        position: sticky;
+        top: 0;
+        background: #f8fafc;
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+      }
+      tbody td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #eef2f7;
+        vertical-align: top;
+      }
+      tbody tr { cursor: pointer; }
+      tbody tr:hover { background: #f8fafc; }
+      tbody tr.active { background: var(--accent-soft); }
+      .file-name { font-weight: 600; word-break: break-word; }
+      .path { color: var(--muted); font-size: 12px; max-width: 280px; word-break: break-all; }
+      .badge {
+        display: inline-block;
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-weight: 600;
+      }
+      .badge.success { background: #dcfce7; color: #166534; }
+      .badge.cataloged { background: #e0e7ff; color: #3730a3; }
+      .badge.failure { background: #fee2e2; color: #991b1b; }
+      .badge.pending { background: #e2e8f0; color: #334155; }
+      .detail {
+        overflow: auto;
+        padding: 16px;
+        background: #fff;
+      }
+      .detail h2 { margin: 0 0 12px; font-size: 16px; }
+      .section { margin-bottom: 14px; }
+      .section b { display: block; margin-bottom: 4px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+      pre {
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        padding: 10px;
+        border-radius: 8px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 12px;
+        margin: 0;
+        max-height: 240px;
+        overflow: auto;
+      }
+      .pager {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-top: 1px solid var(--border);
+        background: #fff;
+        font-size: 13px;
+      }
+      .hint { color: var(--muted); font-size: 14px; padding: 24px; }
+      @media (max-width: 960px) {
+        .layout { grid-template-columns: 1fr; }
+        .detail { border-top: 1px solid var(--border); min-height: 40vh; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>BV Hưng Thịnh — OCR Catalog</h1>
+      <div class="sub">PostgreSQL · table list → click row để xem detail</div>
+    </header>
+
+    <div class="toolbar">
+      <input id="search" placeholder="Tìm theo đường dẫn / tên file..." style="min-width:220px" />
+      <select id="status">
+        <option value="">Tất cả status</option>
+        <option value="cataloged">cataloged</option>
+        <option value="success">success</option>
+        <option value="failure">failure</option>
+        <option value="pending">pending</option>
+      </select>
+      <select id="drive">
+        <option value="">Tất cả drives</option>
+        <option value="project/hth-shared-drive">HTH-Shared-Drive</option>
+        <option value="/Yen">Personal /Yen</option>
+      </select>
+      <button class="primary" id="reload">Tải lại</button>
+    </div>
+
+    <div class="stats" id="stats">Đang tải thống kê...</div>
+
+    <div class="layout">
+      <section class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>File</th>
+              <th>Đường dẫn OCIS</th>
+              <th>Status</th>
+              <th>OCR</th>
+              <th>AI</th>
+              <th>Category</th>
+              <th>Cập nhật</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="pager">
+          <button id="prev">← Trước</button>
+          <span id="pagerInfo">—</span>
+          <button id="next">Sau →</button>
+        </div>
+      </section>
+      <aside class="detail" id="detail">
+        <div class="hint">Chọn một dòng trong bảng để xem chi tiết.</div>
+      </aside>
+    </div>
+
+    <script>
+      const rowsEl = document.getElementById("rows");
+      const detailEl = document.getElementById("detail");
+      const statsEl = document.getElementById("stats");
+      const searchEl = document.getElementById("search");
+      const statusEl = document.getElementById("status");
+      const driveEl = document.getElementById("drive");
+      const reloadBtn = document.getElementById("reload");
+      const prevBtn = document.getElementById("prev");
+      const nextBtn = document.getElementById("next");
+      const pagerInfoEl = document.getElementById("pagerInfo");
+
+      const pageSize = 50;
+      let offset = 0;
+      let total = 0;
+      let activeId = null;
+
+      function badge(status) {
+        const cls = ["success", "cataloged", "failure"].includes(status) ? status : "pending";
+        return `<span class="badge ${cls}">${escapeHtml(status || "—")}</span>`;
+      }
+
+      function fileName(path) {
+        if (!path) return "—";
+        return path.split("/").pop() || path;
+      }
+
+      function fmtDate(value) {
+        if (!value) return "—";
+        return String(value).replace("T", " ").slice(0, 19);
+      }
+
+      async function fetchStats() {
+        const res = await fetch("/api/stats");
+        const data = await res.json();
+        const s = data.stats;
+        statsEl.textContent =
+          `Tổng=${s.total} | cataloged=${s.cataloged} | OCR ok=${s.success} | lỗi=${s.failure} | AI=${s.ai_reviewed} | HTH-Shared=${s.hth_shared} | avg_md=${Math.round(s.avg_markdown_len)}`;
+      }
+
+      function queryParams() {
+        const q = new URLSearchParams();
+        q.set("limit", String(pageSize));
+        q.set("offset", String(offset));
+        if (searchEl.value.trim()) q.set("q", searchEl.value.trim());
+        if (statusEl.value) q.set("status", statusEl.value);
+        if (driveEl.value) q.set("drive", driveEl.value);
+        return q;
+      }
+
+      async function fetchTable() {
+        const res = await fetch(`/api/documents?${queryParams()}`);
+        const data = await res.json();
+        const items = data.items || [];
+        total = data.total || 0;
+        rowsEl.innerHTML = "";
+        for (const item of items) {
+          const tr = document.createElement("tr");
+          if (item.id === activeId) tr.classList.add("active");
+          const path = item.owncloud_path || item.source_path || "";
+          tr.innerHTML = `
+            <td>${item.id}</td>
+            <td class="file-name">${escapeHtml(fileName(path))}</td>
+            <td class="path">${escapeHtml(path)}</td>
+            <td>${badge(item.status)}</td>
+            <td>${item.markdown_len || 0}</td>
+            <td>${badge(item.ai_review_status || "pending")}</td>
+            <td>${escapeHtml(item.ai_category || "—")}</td>
+            <td>${fmtDate(item.updated_at)}</td>
+          `;
+          tr.onclick = () => openDetail(item.id);
+          rowsEl.appendChild(tr);
+        }
+        const from = total === 0 ? 0 : offset + 1;
+        const to = Math.min(offset + pageSize, total);
+        pagerInfoEl.textContent = `${from}–${to} / ${total}`;
+        prevBtn.disabled = offset <= 0;
+        nextBtn.disabled = offset + pageSize >= total;
+      }
+
+      async function openDetail(id) {
+        activeId = id;
+        await fetchTable();
+        const res = await fetch(`/api/documents/${id}`);
+        const data = await res.json();
+        if (!data.ok) {
+          detailEl.innerHTML = `<div class="hint">${escapeHtml(data.error || "Không tải được")}</div>`;
+          return;
+        }
+        const d = data.item;
+        const tags = Array.isArray(d.ai_tags) ? d.ai_tags.join(", ") : JSON.stringify(d.ai_tags || []);
+        detailEl.innerHTML = `
+          <h2>#${d.id} — ${escapeHtml(fileName(d.owncloud_path || d.source_path))}</h2>
+          <div class="section"><b>OwnCloud path</b><pre>${escapeHtml(d.owncloud_path || "")}</pre></div>
+          <div class="section"><b>Status / SHA256</b><pre>${escapeHtml(d.status)} | ${escapeHtml(d.source_sha256 || "")}</pre></div>
+          <div class="section"><b>AI metadata</b><pre>doc_type=${d.ai_doc_type || "—"}
+category=${d.ai_category || "—"}
+ocr_quality=${d.ai_ocr_quality || "—"}
+tags=${tags}</pre></div>
+          <div class="section"><b>AI review</b><pre>status=${d.ai_review_status || "pending"}
+model=${d.ai_review_model || "—"}
+at=${fmtDate(d.ai_review_at)}
+${escapeHtml(d.ai_review_error || "")}
+
+${escapeHtml(d.ai_review || "(chưa có)")}</pre></div>
+          <div class="section"><b>Key fields (JSON)</b><pre>${escapeHtml(JSON.stringify(d.ai_key_fields || {}, null, 2))}</pre></div>
+          <div class="section"><b>Verified metadata</b><pre>${escapeHtml(JSON.stringify(d.verified_metadata || {}, null, 2))}</pre></div>
+          <div class="section"><b>Markdown OCR</b><pre>${escapeHtml(d.markdown || "(chưa OCR)")}</pre></div>
+          <div class="section"><b>Doc JSON</b><pre>${escapeHtml(JSON.stringify(d.doc_json || {}, null, 2))}</pre></div>
+        `;
+      }
+
+      function escapeHtml(text) {
+        return String(text)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
+      }
+
+      async function refreshAll() {
+        await fetchStats();
+        await fetchTable();
+      }
+
+      reloadBtn.onclick = () => { offset = 0; refreshAll(); };
+      searchEl.onkeydown = (e) => { if (e.key === "Enter") { offset = 0; refreshAll(); } };
+      statusEl.onchange = () => { offset = 0; refreshAll(); };
+      driveEl.onchange = () => { offset = 0; refreshAll(); };
+      prevBtn.onclick = () => { offset = Math.max(0, offset - pageSize); fetchTable(); };
+      nextBtn.onclick = () => { offset += pageSize; fetchTable(); };
+
+      refreshAll();
+    </script>
+  </body>
+</html>
