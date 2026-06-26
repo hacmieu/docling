@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260626_1803-ai-enrich-pilot15.md](./20260626_1803-ai-enrich-pilot15.md): Pilot AI enrich 15 doc — 15/15 OK sau retry; ~17s API/doc.
 - [20260625_2319-concept-search-narrowing.md](./20260625_2319-concept-search-narrowing.md): Thu hẹp không gian tìm kiếm — ví dụ «phạm vi hành nghề»; FTS + tag + concept map trước AI.
 - [20260625_2313-ai-category-tag-direction.md](./20260625_2313-ai-category-tag-direction.md): AI category/tag bổ sung API context kiểu email — không thay lớp lọc path/ngày/luồng.
 - [20260625_2056-ocr-full-batch-sla.md](./20260625_2056-ocr-full-batch-sla.md): Full OCR 437 PDF (~78 phút); Teable ENV placeholder trong .env.

@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260626_1803-ai-enrich-full-batch-plan.md](./20260626_1803-ai-enrich-full-batch-plan.md): Plan full AI enrich ~439 doc sau pilot 15 (~2.6h).
 - [20260625_2319-concept-search-plan.md](./20260625_2319-concept-search-plan.md): Plan concept registry + multi-signal search (use case phạm vi hành nghề).
 - [20260625_2313-ai-taxonomy-enrichment-plan.md](./20260625_2313-ai-taxonomy-enrichment-plan.md): Plan taxonomy AI + context API (filter structural → enrich → Q&A subset).
 - [20260625_2056-ocr-full-batch-plan.md](./20260625_2056-ocr-full-batch-plan.md): Plan chạy OCR full batch `--all` đo SLA toàn bộ PDF.
