@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260629_1134-teable-sync-expand-plan.md](./20260629_1134-teable-sync-expand-plan.md): Mở rộng cột Teable sau MVP sync 475 doc.
 - [20260626_1803-ai-enrich-full-batch-plan.md](./20260626_1803-ai-enrich-full-batch-plan.md): Plan full AI enrich ~439 doc sau pilot 15 (~2.6h).
 - [20260625_2319-concept-search-plan.md](./20260625_2319-concept-search-plan.md): Plan concept registry + multi-signal search (use case phạm vi hành nghề).
 - [20260625_2313-ai-taxonomy-enrichment-plan.md](./20260625_2313-ai-taxonomy-enrichment-plan.md): Plan taxonomy AI + context API (filter structural → enrich → Q&A subset).
