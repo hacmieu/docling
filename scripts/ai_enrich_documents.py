@@ -270,6 +270,7 @@ def main() -> int:
                 print(f"[FAIL] id={doc_id} duration={duration}s error={exc}")
 
             sla_records.append(sla)
+            conn.commit()
             if args.sleep_seconds > 0:
                 time.sleep(args.sleep_seconds)
 

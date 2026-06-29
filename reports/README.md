@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260629_1416-dev-parallel-status-report.md](./20260629_1416-dev-parallel-status-report.md): Tổng kết tiến độ + enrich nền ~84 OK; Gemini 403 cần Codex key.
 - [20260629_1334-dev-sequential-execution-report.md](./20260629_1334-dev-sequential-execution-report.md): Báo cáo DEV — Vision blocked, Q&A OK, enrich 5/5 + full batch nền.
 - [20260629_1258-priority-search-vision-implementation-report.md](./20260629_1258-priority-search-vision-implementation-report.md): Báo cáo triển khai waterfall + search + Celery vision queue.
 - [20260629_1250-priority-schema-search-advisory.md](./20260629_1250-priority-schema-search-advisory.md): Tư vấn waterfall, field thừa, search nhân viên, Gemini queue.
