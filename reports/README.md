@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260629_1250-priority-schema-search-advisory.md](./20260629_1250-priority-schema-search-advisory.md): Tư vấn waterfall, field thừa, search nhân viên, Gemini queue.
 - [20260629_1215-metadata-normalize-extraction-sync-report.md](./20260629_1215-metadata-normalize-extraction-sync-report.md): Chuẩn hóa metadata + 462 DocExtractions Teable (RAW/DeepSeek).
 - [20260629_1155-multi-version-extraction-report.md](./20260629_1155-multi-version-extraction-report.md): Thiết kế + triển khai Teable PromptTemplates/DocExtractions + Postgres extractions.
 - [20260629_1141-teable-fields-expanded-report.md](./20260629_1141-teable-fields-expanded-report.md): Field API + full resync 475 doc với markdown/AI/OCR SLA.
