@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260629_1540-gemini-codex-check-report.md](./20260629_1540-gemini-codex-check-report.md): Gemini model list OK; OCR probe bị 429 resource exhausted.
 - [20260629_1425-vision-key-check-report.md](./20260629_1425-vision-key-check-report.md): Vision key riêng OK; blocker 503 kênh Gemini AI Box.
 - [20260629_1416-dev-parallel-status-report.md](./20260629_1416-dev-parallel-status-report.md): Tổng kết tiến độ + enrich nền.
 - [20260629_1334-dev-sequential-execution-report.md](./20260629_1334-dev-sequential-execution-report.md): Báo cáo DEV — Vision blocked, Q&A OK, enrich 5/5 + full batch nền.
