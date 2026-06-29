@@ -32,6 +32,9 @@
 !db_postgres.py
 !teable_catalog.py
 !extraction_priority.py
+!metadata_normalize.py
+!config/
+!config/taxonomy_vi.json
 !requirements-pipeline.txt
 !infra/
 !infra/README.md

@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260629_1215-taxonomy-teable-sync-plan.md](./20260629_1215-taxonomy-teable-sync-plan.md): Quy ước taxonomy + Teable singleSelect/multipleSelect trước sync.
 - [20260629_1155-multi-version-extraction-plan.md](./20260629_1155-multi-version-extraction-plan.md): Plan Webchat → Teable, priority versions, API quyền tắt sau setup.
 - [20260629_1141-teable-views-plan.md](./20260629_1141-teable-views-plan.md): Views Teable + search sau khi đủ 16 cột catalog.
 - [20260629_1134-teable-sync-expand-plan.md](./20260629_1134-teable-sync-expand-plan.md): Mở rộng cột Teable sau MVP sync 475 doc.

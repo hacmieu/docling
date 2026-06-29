@@ -13,6 +13,11 @@ from urllib.parse import unquote
 import requests
 
 from workspace.ocr_pipeline.db_postgres import load_dotenv
+from workspace.ocr_pipeline.metadata_normalize import (
+    normalize_category,
+    normalize_doc_type,
+    normalize_tags,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ENV_FILE = REPO_ROOT / ".env"
@@ -99,11 +104,13 @@ def build_label(doc_id: int, owncloud_path: str | None, ai_category: str | None)
 
 
 def tags_to_text(ai_tags: Any) -> str:
-    if isinstance(ai_tags, list):
-        return ", ".join(str(t) for t in ai_tags if str(t).strip())
-    if isinstance(ai_tags, str):
-        return ai_tags
-    return ""
+    """Legacy comma text; prefer normalize_tags for Teable multipleSelect."""
+    slugs = normalize_tags(ai_tags)
+    return ", ".join(slugs)
+
+
+def tags_for_teable(ai_tags: Any) -> list[str]:
+    return normalize_tags(ai_tags)
 
 
 def ocr_sla(doc_json: Any) -> dict[str, Any]:
@@ -175,8 +182,11 @@ def build_record_fields(
     path = display_path(owncloud_path)
     sla = ocr_sla(doc_json)
     duration = sla.get("duration_seconds")
+    _cat_slug, cat_label = normalize_category(ai_category)
+    type_slug, _type_label = normalize_doc_type(ai_doc_type)
+    norm_tags = tags_for_teable(ai_tags)
     fields: dict[str, Any] = {
-        cfg["field_label"]: build_label(doc_id, owncloud_path, ai_category),
+        cfg["field_label"]: build_label(doc_id, owncloud_path, cat_label or ai_category),
         cfg["field_number"]: doc_id,
         cfg["field_status"]: map_teable_status(status or "", ai_review_status),
         "owncloud_path": path,
@@ -184,14 +194,17 @@ def build_record_fields(
         "phong_ban": parse_phong_ban(owncloud_path, drive_prefix),
         "catalog_status": status or "",
         "markdown_preview": (markdown or "")[:MARKDOWN_PREVIEW_LEN],
-        "ai_category": ai_category or "",
-        "ai_doc_type": ai_doc_type or "",
-        "ai_tags": tags_to_text(ai_tags),
         "ai_review": ai_review or "",
         "ocr_started_at": str(sla.get("started_at") or ""),
         "ocr_finished_at": str(sla.get("finished_at") or ""),
         "updated_at": updated_at.isoformat() if updated_at else "",
     }
+    if cat_label:
+        fields["ai_category"] = cat_label
+    if type_slug:
+        fields["ai_doc_type"] = type_slug
+    if norm_tags:
+        fields["ai_tags"] = norm_tags
     if duration is not None:
         try:
             fields["ocr_duration_s"] = float(duration)

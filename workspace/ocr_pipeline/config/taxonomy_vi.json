@@ -1,0 +1,86 @@
+{
+  "categories": {
+    "nhan-su": {
+      "label": "Nhân sự",
+      "aliases": ["nhân sự", "Nhân sự", "Hành chính nhân sự", "Nhân sự - Đào tạo", "hành chính"]
+    },
+    "hop-dong-lao-dong": {
+      "label": "Hợp đồng lao động",
+      "aliases": ["Hợp đồng lao động", "lao động", "hợp đồng lao động", "Hợp đồng học việc"]
+    },
+    "ly-lich-tu-phap": {
+      "label": "Lý lịch tư pháp",
+      "aliases": ["Lý lịch tư pháp", "Phiếu lý lịch tư pháp số 1"]
+    },
+    "cong-chung": {
+      "label": "Công chứng",
+      "aliases": ["Công chứng", "Bản sao công chứng Căn cước công dân"]
+    },
+    "tien-luong": {
+      "label": "Tiền lương",
+      "aliases": ["Tiền lương", "điều chỉnh lương"]
+    },
+    "ho-khau": {
+      "label": "Hộ khẩu",
+      "aliases": ["ho_khau", "ho khau", "sổ hộ khẩu", "so_ho_khau"]
+    },
+    "quyet-dinh": {
+      "label": "Quyết định",
+      "aliases": ["Quyết định", "quyết định"]
+    },
+    "bien-ban": {
+      "label": "Biên bản",
+      "aliases": ["biên bản giao nhận", "Biên bản"]
+    }
+  },
+  "doc_types": {
+    "quyet-dinh": {
+      "label": "Quyết định",
+      "aliases": ["Quyết định", "quyết định"]
+    },
+    "hop-dong-lao-dong": {
+      "label": "Hợp đồng lao động",
+      "aliases": ["Hợp đồng lao động", "hợp đồng lao động", "HDLD", "Hợp đồng học việc"]
+    },
+    "hop-dong-hoc-viec": {
+      "label": "Hợp đồng học việc",
+      "aliases": ["Hợp đồng học việc"]
+    },
+    "ly-lich-tu-phap": {
+      "label": "Lý lịch tư pháp",
+      "aliases": ["Phiếu lý lịch tư pháp số 1", "lý lịch tư pháp"]
+    },
+    "can-cuoc-cong-dan": {
+      "label": "Căn cước công dân",
+      "aliases": ["Bản sao công chứng Căn cước công dân", "căn cước công dân"]
+    },
+    "so-ho-khau": {
+      "label": "Sổ hộ khẩu",
+      "aliases": ["so_ho_khau", "sổ hộ khẩu"]
+    },
+    "bien-ban-giao-nhan": {
+      "label": "Biên bản giao nhận",
+      "aliases": ["biên bản giao nhận"]
+    }
+  },
+  "tag_aliases": {
+    "nhan-su": ["nhân sự", "Nhân sự"],
+    "hop-dong": ["hợp đồng", "Hợp đồng"],
+    "hop-dong-lao-dong": ["hợp đồng lao động", "HDLD", "hợp đồng lao động không xác định thời hạn"],
+    "hoc-viec": ["học việc"],
+    "dao-tao": ["đào tạo", "tập huấn"],
+    "lao-dong": ["lao động"],
+    "ly-lich-tu-phap": ["lý lịch tư pháp"],
+    "khong-an-tich": ["không án tích", "xác nhận án tích"],
+    "cong-chung": ["công chứng", "bản sao", "công chứng viên"],
+    "can-cuoc": ["căn cước công dân"],
+    "ho-khau": ["ho_khau", "dang_ky_thuong_tru"],
+    "cong-an": ["cong_an"],
+    "y-te": ["y tế", "nhân viên y tế", "điều dưỡng"],
+    "bo-nhiem": ["bổ nhiệm", "miễn nhiệm"],
+    "tien-luong": ["điều chỉnh lương"],
+    "phu-luc": ["phụ lục", "phụ lục hợp đồng"],
+    "chung-chi": ["chứng chỉ", "bằng tốt nghiệp"],
+    "cong-ty": ["công ty cổ phần", "Công ty Cổ phần Y - Dược Hưng Thịnh"]
+  }
+}
