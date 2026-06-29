@@ -31,10 +31,13 @@
 !ocr_schema.py
 !db_postgres.py
 !teable_catalog.py
+!extraction_priority.py
 !requirements-pipeline.txt
 !infra/
 !infra/README.md
 !infra/docker-compose.yml
 !infra/postgres/
 !infra/postgres/init.sql
+!infra/postgres/migrations/
+!infra/postgres/migrations/*.sql
 !02_manifest/verified_backfill.sample.json

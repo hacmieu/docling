@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260629_1155-multi-version-extraction-report.md](./20260629_1155-multi-version-extraction-report.md): Thiết kế + triển khai Teable PromptTemplates/DocExtractions + Postgres extractions.
 - [20260629_1141-teable-fields-expanded-report.md](./20260629_1141-teable-fields-expanded-report.md): Field API + full resync 475 doc với markdown/AI/OCR SLA.
 - [20260629_1134-postgres-teable-sync-report.md](./20260629_1134-postgres-teable-sync-report.md): 4 bảng Postgres + triển khai sync Teable noibo 475 row.
 - [20260626_1803-ai-enrich-pilot15-report.md](./20260626_1803-ai-enrich-pilot15-report.md): Pilot AI enrich 15 doc + SLA timing; retry 7 lỗi mạng.
