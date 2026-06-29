@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260629_1748-four-version-ocr-comparison-report.md](./20260629_1748-four-version-ocr-comparison-report.md): gemini-1.5-pro không khả dụng; so sánh 3 lane + excerpt 3 HĐ mẫu.
 - [20260629_1552-teable-live-sync-report.md](./20260629_1552-teable-live-sync-report.md): Đã sync full vào Teable và bật loop sync định kỳ.
 - [20260629_1545-google-vision-switch-report.md](./20260629_1545-google-vision-switch-report.md): Chuyển vision sang Google API; model list OK; pilot OCR 2/2 thành công.
 - [20260629_1540-gemini-codex-check-report.md](./20260629_1540-gemini-codex-check-report.md): Gemini model list OK; OCR probe bị 429 resource exhausted.
