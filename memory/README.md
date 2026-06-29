@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260630_0638-project-status-summary.md](./20260630_0638-project-status-summary.md): Snapshot 498 doc, enrich xong, vision pilot 3, Teable loop chạy.
 - [20260629_1748-gemini-15-pro-four-version-check.md](./20260629_1748-gemini-15-pro-four-version-check.md): gemini-1.5-pro 404; so sánh EasyOCR/DeepSeek/Gemini Flash trên doc 503–505.
 - [20260629_1552-teable-live-sync-enabled.md](./20260629_1552-teable-live-sync-enabled.md): Bật loop sync Teable 5 phút, fix invalid select options.
 - [20260629_1545-google-vision-switch.md](./20260629_1545-google-vision-switch.md): Đã chuyển lane vision sang Google API và pilot 2/2 thành công.
