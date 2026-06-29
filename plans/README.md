@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260629_1258-priority-search-vision-execution-plan.md](./20260629_1258-priority-search-vision-execution-plan.md): Thực thi P1–P3 — cache effective, search API, Celery vision.
 - [20260629_1250-priority-search-vision-plan.md](./20260629_1250-priority-search-vision-plan.md): Waterfall priority, dọn OwnCloud, staff search, Celery gemini-3-flash.
 - [20260629_1215-taxonomy-teable-sync-plan.md](./20260629_1215-taxonomy-teable-sync-plan.md): Quy ước taxonomy + Teable singleSelect/multipleSelect trước sync.
 - [20260629_1155-multi-version-extraction-plan.md](./20260629_1155-multi-version-extraction-plan.md): Plan Webchat → Teable, priority versions, API quyền tắt sau setup.

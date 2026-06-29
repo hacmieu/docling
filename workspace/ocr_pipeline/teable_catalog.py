@@ -19,6 +19,14 @@ from workspace.ocr_pipeline.metadata_normalize import (
     normalize_tags,
 )
 
+REDUNDANT_OWN_CLOUD_FIELDS: tuple[str, ...] = (
+    "_link_child_test",
+    "ai_category",
+    "ai_doc_type",
+    "ai_tags",
+    "ai_review",
+)
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ENV_FILE = REPO_ROOT / ".env"
 MARKDOWN_PREVIEW_LEN = 2000
@@ -42,10 +50,9 @@ EXTENDED_CATALOG_FIELDS: tuple[CatalogFieldSpec, ...] = (
     CatalogFieldSpec("ocr_duration_s", "number", "doc_json.ocr_sla.duration_seconds"),
     CatalogFieldSpec("ocr_started_at", "singleLineText", "ISO timestamp OCR batch start"),
     CatalogFieldSpec("ocr_finished_at", "singleLineText", "ISO timestamp OCR batch end"),
-    CatalogFieldSpec("ai_category", "singleLineText", "AI category"),
-    CatalogFieldSpec("ai_doc_type", "singleLineText", "AI doc_type slug"),
-    CatalogFieldSpec("ai_tags", "longText", "AI tags comma-separated"),
-    CatalogFieldSpec("ai_review", "longText", "AI Vietnamese summary"),
+    CatalogFieldSpec("active_priority", "number", "Effective extraction priority (waterfall)"),
+    CatalogFieldSpec("active_source", "singleSelect", "Effective extraction source_type key"),
+    CatalogFieldSpec("extraction_version_count", "number", "Count of document_extractions rows"),
     CatalogFieldSpec("updated_at", "singleLineText", "Postgres updated_at ISO"),
 )
 
@@ -128,6 +135,16 @@ def list_table_fields(cfg: dict[str, str]) -> list[dict[str, Any]]:
     return response.json()
 
 
+def delete_table_field(cfg: dict[str, str], field_id: str) -> None:
+    endpoint = f"{cfg['url']}/table/{cfg['table_id']}/field/{field_id}"
+    response = requests.delete(
+        endpoint,
+        headers=teable_headers(cfg["token"]),
+        timeout=60,
+    )
+    response.raise_for_status()
+
+
 def create_table_field(cfg: dict[str, str], spec: CatalogFieldSpec) -> dict[str, Any]:
     endpoint = f"{cfg['url']}/table/{cfg['table_id']}/field"
     body: dict[str, Any] = {"name": spec.name, "type": spec.field_type}
@@ -170,23 +187,19 @@ def build_record_fields(
         doc_id,
         owncloud_path,
         status,
-        ai_category,
         ai_review_status,
-        ai_review,
-        ai_doc_type,
-        ai_tags,
         markdown,
         doc_json,
         updated_at,
+        effective_source_type,
+        effective_priority,
+        extraction_version_count,
     ) = row
     path = display_path(owncloud_path)
     sla = ocr_sla(doc_json)
     duration = sla.get("duration_seconds")
-    _cat_slug, cat_label = normalize_category(ai_category)
-    type_slug, _type_label = normalize_doc_type(ai_doc_type)
-    norm_tags = tags_for_teable(ai_tags)
     fields: dict[str, Any] = {
-        cfg["field_label"]: build_label(doc_id, owncloud_path, cat_label or ai_category),
+        cfg["field_label"]: build_label(doc_id, owncloud_path, None),
         cfg["field_number"]: doc_id,
         cfg["field_status"]: map_teable_status(status or "", ai_review_status),
         "owncloud_path": path,
@@ -194,17 +207,15 @@ def build_record_fields(
         "phong_ban": parse_phong_ban(owncloud_path, drive_prefix),
         "catalog_status": status or "",
         "markdown_preview": (markdown or "")[:MARKDOWN_PREVIEW_LEN],
-        "ai_review": ai_review or "",
         "ocr_started_at": str(sla.get("started_at") or ""),
         "ocr_finished_at": str(sla.get("finished_at") or ""),
         "updated_at": updated_at.isoformat() if updated_at else "",
+        "extraction_version_count": int(extraction_version_count or 0),
     }
-    if cat_label:
-        fields["ai_category"] = cat_label
-    if type_slug:
-        fields["ai_doc_type"] = type_slug
-    if norm_tags:
-        fields["ai_tags"] = norm_tags
+    if effective_priority is not None:
+        fields["active_priority"] = int(effective_priority)
+    if effective_source_type:
+        fields["active_source"] = effective_source_type
     if duration is not None:
         try:
             fields["ocr_duration_s"] = float(duration)

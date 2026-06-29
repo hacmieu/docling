@@ -33,8 +33,14 @@
 !teable_catalog.py
 !extraction_priority.py
 !metadata_normalize.py
+!concept_search.py
+!celery_app.py
+!tasks/
+!tasks/__init__.py
+!tasks/vision_tasks.py
 !config/
 !config/taxonomy_vi.json
+!config/concepts_vi.json
 !requirements-pipeline.txt
 !infra/
 !infra/README.md

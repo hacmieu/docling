@@ -21,7 +21,13 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from workspace.ocr_pipeline.concept_search import (
+    build_search_sql,
+    resolve_concept,
+    snippet_around,
+)
 from workspace.ocr_pipeline.db_postgres import connect, database_url, load_dotenv
+from workspace.ocr_pipeline.teable_catalog import DRIVE_PREFIX_DEFAULT, display_path
 
 
 def json_default(value: Any) -> Any:
@@ -216,6 +222,54 @@ class PgCatalogDb:
         doc["local_path"] = display_path(doc.get("local_path"))
         return serialize_row(doc)
 
+    def search_documents(
+        self,
+        query: str,
+        limit: int,
+        drive: str | None,
+        phong_ban: str | None,
+    ) -> dict[str, Any]:
+        concept = resolve_concept(query)
+        drive_prefix = drive or DRIVE_PREFIX_DEFAULT
+        sql, params = build_search_sql(concept, drive_prefix, phong_ban, limit)
+        with connect() as conn:
+            rows = conn.execute(sql, params).fetchall()
+        items: list[dict[str, Any]] = []
+        needle = concept.synonyms[0] if concept.synonyms else query
+        for row in rows:
+            (
+                doc_id,
+                owncloud_path,
+                effective_source,
+                effective_priority,
+                category,
+                doc_type,
+                tags,
+                summary,
+                markdown_head,
+            ) = row
+            snippet = snippet_around(markdown_head or "", needle)
+            items.append(
+                {
+                    "id": doc_id,
+                    "owncloud_path": display_path(owncloud_path),
+                    "effective_source": effective_source,
+                    "effective_priority": effective_priority,
+                    "category": category,
+                    "doc_type": doc_type,
+                    "tags": tags,
+                    "summary": summary,
+                    "snippet": snippet,
+                }
+            )
+        return {
+            "query": query,
+            "concept_id": concept.concept_id,
+            "synonyms": list(concept.synonyms),
+            "items": items,
+            "total": len(items),
+        }
+
 
 def is_port_available(host: str, port: int) -> bool:
     with socket() as sock:
@@ -256,6 +310,19 @@ def build_handler(db: PgCatalogDb, static_dir: Path):
 
             if parsed.path == "/api/stats":
                 self._send_json({"ok": True, "stats": db.stats()})
+                return
+
+            if parsed.path == "/api/search":
+                qs = parse_qs(parsed.query)
+                q = (qs.get("q", [""])[0] or "").strip()
+                if not q:
+                    self._send_json({"ok": False, "error": "q required"}, 400)
+                    return
+                limit = max(1, min(int(qs.get("limit", ["20"])[0]), 100))
+                drive = qs.get("drive", [None])[0]
+                phong_ban = qs.get("phong_ban", [None])[0]
+                result = db.search_documents(q, limit, drive, phong_ban)
+                self._send_json({"ok": True, **result})
                 return
 
             if parsed.path == "/api/documents":

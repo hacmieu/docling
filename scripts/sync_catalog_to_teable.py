@@ -79,11 +79,24 @@ def fetch_existing_by_number(cfg: dict[str, str]) -> dict[int, str]:
 def select_documents(drive_prefix: str, limit: int) -> list[tuple[Any, ...]]:
     sql = """
         SELECT
-            id, owncloud_path, status, ai_category, ai_review_status,
-            ai_review, ai_doc_type, ai_tags, markdown, doc_json, updated_at
-        FROM documents
-        WHERE owncloud_path LIKE %s
-        ORDER BY id
+            d.id,
+            d.owncloud_path,
+            d.status,
+            d.ai_review_status,
+            d.markdown,
+            d.doc_json,
+            d.updated_at,
+            d.effective_source_type,
+            d.effective_priority,
+            COALESCE(v.cnt, 0) AS extraction_version_count
+        FROM documents d
+        LEFT JOIN (
+            SELECT document_id, COUNT(*) AS cnt
+            FROM document_extractions
+            GROUP BY document_id
+        ) v ON v.document_id = d.id
+        WHERE d.owncloud_path LIKE %s
+        ORDER BY d.id
     """
     params: list[Any] = [f"{drive_prefix}%"]
     if limit > 0:

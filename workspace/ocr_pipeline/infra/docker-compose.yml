@@ -42,6 +42,18 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: ["ocis init --insecure yes 2>/dev/null || true; exec ocis server"]
 
+  ocr-redis:
+    image: redis:7-alpine
+    container_name: ocr-pipeline-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
   ocr_pg_data:
   ocis_config:

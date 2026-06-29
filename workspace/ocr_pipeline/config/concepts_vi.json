@@ -1,0 +1,27 @@
+{
+  "pham-vi-hanh-nghe": {
+    "label": "Phạm vi hành nghề",
+    "synonyms": [
+      "phạm vi hành nghề",
+      "phạm vi",
+      "hành nghề y",
+      "chứng chỉ hành nghề",
+      "giấy phép hành nghề",
+      "đăng ký hành nghề"
+    ],
+    "tags": ["pham-vi-hanh-nghe", "hanh-nghe", "chung-chi"],
+    "categories": ["Nhân sự", "Quyết định"]
+  },
+  "hop-dong-lao-dong": {
+    "label": "Hợp đồng lao động",
+    "synonyms": ["hợp đồng lao động", "hdld", "hợp đồng học việc", "học việc"],
+    "tags": ["hop-dong", "hop-dong-lao-dong", "hoc-viec", "lao-dong"],
+    "categories": ["Hợp đồng lao động"]
+  },
+  "quyet-dinh": {
+    "label": "Quyết định",
+    "synonyms": ["quyết định", "qđ", "ban hành"],
+    "tags": ["quyet-dinh", "bo-nhiem", "mien-nhiem"],
+    "categories": ["Quyết định", "Nhân sự"]
+  }
+}
