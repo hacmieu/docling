@@ -4,7 +4,8 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
-- [20260629_1416-dev-parallel-status-summary.md](./20260629_1416-dev-parallel-status-summary.md): Tổng kết dự án + lane song song enrich/vision; Gemini cần Codex key.
+- [20260629_1425-vision-key-fix-and-diagnosis.md](./20260629_1425-vision-key-fix-and-diagnosis.md): Sửa trùng key vision; 503 AI Box chưa có kênh gemini-3-flash.
+- [20260629_1416-dev-parallel-status-summary.md](./20260629_1416-dev-parallel-status-summary.md): Tổng kết dự án + lane song song enrich/vision.
 - [20260629_1334-dev-sequential-execution.md](./20260629_1334-dev-sequential-execution.md): DEV lần lượt — Vision (block key), Q&A search, enrich pilot 5 + full batch nền.
 - [20260629_1258-priority-search-vision-implementation.md](./20260629_1258-priority-search-vision-implementation.md): Triển khai cache waterfall, /api/search, Celery Gemini vision, dọn OwnCloud Teable.
 - [20260629_1250-priority-waterfall-gemini-queue.md](./20260629_1250-priority-waterfall-gemini-queue.md): Priority waterfall (không chỉ active); field thừa OwnCloud; Celery Gemini vision.

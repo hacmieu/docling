@@ -28,8 +28,6 @@ VISION_PROMPT = (
 def vision_api_config() -> dict[str, str]:
     load_dotenv(ENV_FILE)
     key = os.environ.get("AI_BOX_VISION_API_KEY", "").strip()
-    if not key and os.environ.get("OCR_DEV_VISION_FALLBACK", "1") == "1":
-        key = os.environ.get("AI_BOX_API_KEY", "").strip()
     url = os.environ.get("AI_BOX_API_URL", "https://api.ai-box.vn").rstrip("/")
     model = os.environ.get("AI_BOX_VISION_MODEL", "gemini-3-flash").strip()
     if not key:

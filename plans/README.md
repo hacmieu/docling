@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260629_1425-vision-api-unblock-plan.md](./20260629_1425-vision-api-unblock-plan.md): Chạy vision batch sau khi check_vision_api pass.
 - [20260629_1416-dev-parallel-execution-plan.md](./20260629_1416-dev-parallel-execution-plan.md): DEV song song DeepSeek enrich ∥ Gemini vision + post-sync.
 - [20260629_1334-dev-sequential-execution-plan.md](./20260629_1334-dev-sequential-execution-plan.md): DEV chạy lần lượt Vision → Q&A → full AI enrich.
 - [20260629_1258-priority-search-vision-execution-plan.md](./20260629_1258-priority-search-vision-execution-plan.md): Thực thi P1–P3 — cache effective, search API, Celery vision.
