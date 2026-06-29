@@ -27,6 +27,7 @@ from workspace.ocr_pipeline.concept_search import (
     snippet_around,
 )
 from workspace.ocr_pipeline.db_postgres import connect, database_url, load_dotenv
+from workspace.ocr_pipeline.search_qa import answer_from_search_items
 from workspace.ocr_pipeline.teable_catalog import DRIVE_PREFIX_DEFAULT, display_path
 
 
@@ -270,6 +271,25 @@ class PgCatalogDb:
             "total": len(items),
         }
 
+    def search_qa(
+        self,
+        query: str,
+        limit: int,
+        drive: str | None,
+        phong_ban: str | None,
+    ) -> dict[str, Any]:
+        search_limit = max(1, min(limit, 10))
+        search = self.search_documents(query, search_limit, drive, phong_ban)
+        if not search["items"]:
+            return {
+                **search,
+                "answer": "Không tìm thấy tài liệu phù hợp trong catalog đã lọc.",
+                "reference_doc_ids": [],
+                "model": None,
+            }
+        qa = answer_from_search_items(query, search["items"])
+        return {**search, **qa}
+
 
 def is_port_available(host: str, port: int) -> bool:
     with socket() as sock:
@@ -322,6 +342,23 @@ def build_handler(db: PgCatalogDb, static_dir: Path):
                 drive = qs.get("drive", [None])[0]
                 phong_ban = qs.get("phong_ban", [None])[0]
                 result = db.search_documents(q, limit, drive, phong_ban)
+                self._send_json({"ok": True, **result})
+                return
+
+            if parsed.path == "/api/search/qa":
+                qs = parse_qs(parsed.query)
+                q = (qs.get("q", [""])[0] or "").strip()
+                if not q:
+                    self._send_json({"ok": False, "error": "q required"}, 400)
+                    return
+                limit = max(1, min(int(qs.get("limit", ["10"])[0]), 10))
+                drive = qs.get("drive", [None])[0]
+                phong_ban = qs.get("phong_ban", [None])[0]
+                try:
+                    result = db.search_qa(q, limit, drive, phong_ban)
+                except Exception as exc:
+                    self._send_json({"ok": False, "error": str(exc)}, 502)
+                    return
                 self._send_json({"ok": True, **result})
                 return
 

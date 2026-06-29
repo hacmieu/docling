@@ -19,6 +19,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from workspace.ocr_pipeline.db_postgres import connect, link_document_tags, load_dotenv
+from workspace.ocr_pipeline.extraction_store import upsert_deepseek_extraction
 
 ENV_FILE = REPO_ROOT / ".env"
 MAX_MARKDOWN_CHARS = 12000
@@ -63,6 +64,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--doc-id", type=int, default=None)
     parser.add_argument("--sleep-seconds", type=float, default=4.0)
+    parser.add_argument(
+        "--drive-prefix",
+        default="project/hth-shared-drive",
+        help="Only enrich documents whose owncloud_path starts with this prefix.",
+    )
     parser.add_argument(
         "--sla-report",
         type=Path,
@@ -152,8 +158,10 @@ def main() -> int:
                 SELECT id, owncloud_path, source_path, markdown, ai_review_status
                 FROM documents
                 WHERE status IN ('success', 'cataloged')
+                  AND owncloud_path LIKE %s
                 ORDER BY id
-                """
+                """,
+                (f"{args.drive_prefix}%",),
             ).fetchall()
 
         for doc_id, owncloud_path, source_path, markdown, review_status in rows:
@@ -221,6 +229,16 @@ def main() -> int:
                     ),
                 )
                 link_document_tags(conn, doc_id, tags)
+                upsert_deepseek_extraction(
+                    conn,
+                    doc_id,
+                    category=str(data.get("category", "")),
+                    doc_type=str(data.get("doc_type", "")),
+                    tags=tags,
+                    key_fields=dict(data.get("key_fields", {})),
+                    summary=str(data.get("review_vi", "")),
+                    model_name=cfg["model"],
+                )
                 merge_doc_json_ai_sla(conn, doc_id, sla)
                 success += 1
                 print(

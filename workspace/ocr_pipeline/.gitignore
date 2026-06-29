@@ -34,6 +34,8 @@
 !extraction_priority.py
 !metadata_normalize.py
 !concept_search.py
+!extraction_store.py
+!search_qa.py
 !celery_app.py
 !tasks/
 !tasks/__init__.py
