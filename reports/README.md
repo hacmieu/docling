@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260629_1141-teable-fields-expanded-report.md](./20260629_1141-teable-fields-expanded-report.md): Field API + full resync 475 doc với markdown/AI/OCR SLA.
 - [20260629_1134-postgres-teable-sync-report.md](./20260629_1134-postgres-teable-sync-report.md): 4 bảng Postgres + triển khai sync Teable noibo 475 row.
 - [20260626_1803-ai-enrich-pilot15-report.md](./20260626_1803-ai-enrich-pilot15-report.md): Pilot AI enrich 15 doc + SLA timing; retry 7 lỗi mạng.
 - [20260625_2319-concept-search-advisory-report.md](./20260625_2319-concept-search-advisory-report.md): Tư vấn tìm theo khái niệm (phạm vi hành nghề) — liệt kê 0 token, AI chỉ trên subset.

@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260629_1141-teable-fields-expanded.md](./20260629_1141-teable-fields-expanded.md): 13 field API mới + resync 475 row đầy đủ (path, OCR preview, AI tags).
 - [20260629_1134-postgres-teable-sync.md](./20260629_1134-postgres-teable-sync.md): Postgres 4 bảng; sync 475 doc lên Teable noibo (MVP Label/Number/Status).
 - [20260626_1803-ai-enrich-pilot15.md](./20260626_1803-ai-enrich-pilot15.md): Pilot AI enrich 15 doc — 15/15 OK sau retry; ~17s API/doc.
 - [20260625_2319-concept-search-narrowing.md](./20260625_2319-concept-search-narrowing.md): Thu hẹp không gian tìm kiếm — ví dụ «phạm vi hành nghề»; FTS + tag + concept map trước AI.

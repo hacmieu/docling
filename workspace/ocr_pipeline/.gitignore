@@ -30,6 +30,7 @@
 !webapp/static/catalog.html
 !ocr_schema.py
 !db_postgres.py
+!teable_catalog.py
 !requirements-pipeline.txt
 !infra/
 !infra/README.md

@@ -5,14 +5,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 import time
-import unicodedata
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import unquote
 
 import requests
 
@@ -20,70 +17,34 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from workspace.ocr_pipeline.db_postgres import connect, load_dotenv
-
-ENV_FILE = REPO_ROOT / ".env"
-TEABLE_STATUS_OPTIONS = ("To do", "In progress", "Done")
-
+from workspace.ocr_pipeline.db_postgres import connect
+from workspace.ocr_pipeline.teable_catalog import (
+    DRIVE_PREFIX_DEFAULT,
+    build_record_fields,
+    ensure_catalog_fields,
+    teable_config,
+    teable_headers,
+)
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--limit", type=int, default=0, help="Max rows to sync (0 = all).")
     parser.add_argument(
         "--drive-prefix",
-        default="project/hth-shared-drive",
+        default=DRIVE_PREFIX_DEFAULT,
         help="Only sync documents whose owncloud_path starts with this prefix.",
     )
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--sleep-seconds", type=float, default=0.2)
+    parser.add_argument(
+        "--ensure-fields",
+        action="store_true",
+        help="Create missing Teable columns before syncing records.",
+    )
+    parser.add_argument("--sleep-seconds", type=float, default=0.15)
     return parser.parse_args()
 
 
-def teable_config() -> dict[str, str]:
-    load_dotenv(ENV_FILE)
-    url = os.environ.get("TEABLE_API_URL", "").rstrip("/")
-    token = os.environ.get("TEABLE_API_TOKEN", "").strip()
-    table_id = os.environ.get("TEABLE_TABLE_DOCUMENTS_ID", "").strip()
-    if not url or not token or not table_id:
-        raise RuntimeError("TEABLE_API_URL, TEABLE_API_TOKEN, TEABLE_TABLE_DOCUMENTS_ID required in .env")
-    return {
-        "url": url,
-        "token": token,
-        "table_id": table_id,
-        "field_label": os.environ.get("TEABLE_FIELD_LABEL", "Label"),
-        "field_number": os.environ.get("TEABLE_FIELD_NUMBER", "Number"),
-        "field_status": os.environ.get("TEABLE_FIELD_STATUS", "Status"),
-    }
-
-
-def display_path(path: str | None) -> str:
-    if not path:
-        return ""
-    return unicodedata.normalize("NFC", unquote(path))
-
-
-def map_teable_status(status: str, ai_review_status: str | None) -> str:
-    if status == "success" and ai_review_status == "success":
-        return "Done"
-    if status == "success":
-        return "In progress"
-    return "To do"
-
-
-def build_label(doc_id: int, owncloud_path: str | None, ai_category: str | None) -> str:
-    path = display_path(owncloud_path)
-    name = Path(path).name if path else f"doc-{doc_id}"
-    if ai_category:
-        return f"{name} — {ai_category}"
-    return name
-
-
-def teable_headers(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-
-
 def fetch_existing_by_number(cfg: dict[str, str]) -> dict[int, str]:
-    """Return doc_id -> Teable record id."""
     out: dict[int, str] = {}
     skip = 0
     take = 1000
@@ -98,8 +59,7 @@ def fetch_existing_by_number(cfg: dict[str, str]) -> dict[int, str]:
             timeout=60,
         )
         response.raise_for_status()
-        payload = response.json()
-        records = payload.get("records", [])
+        records = response.json().get("records", [])
         if not records:
             break
         for record in records:
@@ -119,7 +79,8 @@ def fetch_existing_by_number(cfg: dict[str, str]) -> dict[int, str]:
 def select_documents(drive_prefix: str, limit: int) -> list[tuple[Any, ...]]:
     sql = """
         SELECT
-            id, owncloud_path, status, ai_category, ai_review_status, updated_at
+            id, owncloud_path, status, ai_category, ai_review_status,
+            ai_review, ai_doc_type, ai_tags, markdown, doc_json, updated_at
         FROM documents
         WHERE owncloud_path LIKE %s
         ORDER BY id
@@ -140,7 +101,8 @@ def upsert_record(
 ) -> str:
     if dry_run:
         action = "PATCH" if record_id else "POST"
-        print(f"[DRY] {action} fields={json.dumps(fields, ensure_ascii=False)}")
+        preview = {k: (v[:80] + "…" if isinstance(v, str) and len(v) > 80 else v) for k, v in fields.items()}
+        print(f"[DRY] {action} fields={json.dumps(preview, ensure_ascii=False)}")
         return record_id or "dry-run-id"
 
     if record_id:
@@ -176,6 +138,10 @@ def main() -> int:
     batch_started = datetime.now(UTC)
     t0 = time.perf_counter()
 
+    if args.ensure_fields:
+        created_fields = ensure_catalog_fields(cfg, dry_run=args.dry_run)
+        print(f"Ensure fields: {len(created_fields)} new column(s)")
+
     rows = select_documents(args.drive_prefix, args.limit)
     if not rows:
         print("No documents matched drive prefix.")
@@ -184,12 +150,9 @@ def main() -> int:
     existing = fetch_existing_by_number(cfg)
     created = updated = failed = 0
 
-    for doc_id, owncloud_path, status, ai_category, ai_review_status, _updated_at in rows:
-        fields = {
-            cfg["field_label"]: build_label(doc_id, owncloud_path, ai_category),
-            cfg["field_number"]: doc_id,
-            cfg["field_status"]: map_teable_status(status or "", ai_review_status),
-        }
+    for row in rows:
+        doc_id = row[0]
+        fields = build_record_fields(cfg, row, args.drive_prefix)
         record_id = existing.get(doc_id)
         try:
             new_id = upsert_record(cfg, fields, record_id, args.dry_run)
