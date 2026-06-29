@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260629_1552-teable-live-sync-report.md](./20260629_1552-teable-live-sync-report.md): Đã sync full vào Teable và bật loop sync định kỳ.
 - [20260629_1545-google-vision-switch-report.md](./20260629_1545-google-vision-switch-report.md): Chuyển vision sang Google API; model list OK; pilot OCR 2/2 thành công.
 - [20260629_1540-gemini-codex-check-report.md](./20260629_1540-gemini-codex-check-report.md): Gemini model list OK; OCR probe bị 429 resource exhausted.
 - [20260629_1425-vision-key-check-report.md](./20260629_1425-vision-key-check-report.md): Vision key riêng OK; blocker 503 kênh Gemini AI Box.

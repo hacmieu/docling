@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260629_1552-teable-live-sync-enabled.md](./20260629_1552-teable-live-sync-enabled.md): Bật loop sync Teable 5 phút, fix invalid select options.
 - [20260629_1545-google-vision-switch.md](./20260629_1545-google-vision-switch.md): Đã chuyển lane vision sang Google API và pilot 2/2 thành công.
 - [20260629_1540-gemini-codex-check.md](./20260629_1540-gemini-codex-check.md): Gemini key có quyền model; test OCR trả 429 resource exhausted.
 - [20260629_1425-vision-key-fix-and-diagnosis.md](./20260629_1425-vision-key-fix-and-diagnosis.md): Sửa trùng key vision; 503 AI Box chưa có kênh gemini-3-flash.

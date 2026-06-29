@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260629_1552-teable-live-sync-plan.md](./20260629_1552-teable-live-sync-plan.md): Kế hoạch đẩy Teable liên tục bằng loop sync 5 phút.
 - [20260629_1545-google-vision-rollout-plan.md](./20260629_1545-google-vision-rollout-plan.md): Rollout Google Gemini vision (2.5 flash/pro) với nhịp chậm cho free-tier.
 - [20260629_1540-gemini-codex-retry-plan.md](./20260629_1540-gemini-codex-retry-plan.md): Retry Gemini chậm/backoff rồi chạy vision batch song song.
 - [20260629_1425-vision-api-unblock-plan.md](./20260629_1425-vision-api-unblock-plan.md): Chạy vision batch sau khi check_vision_api pass.

@@ -109,6 +109,22 @@ def fetch_extraction_record_map(cfg: dict[str, str]) -> dict[int, str]:
     return out
 
 
+def fetch_allowed_select_choices(cfg: dict[str, str]) -> dict[str, set[str]]:
+    endpoint = f"{cfg['url']}/table/{cfg['extractions_table_id']}/field"
+    response = requests.get(endpoint, headers=teable_headers(cfg["token"]), timeout=60)
+    response.raise_for_status()
+    fields = response.json()
+    out: dict[str, set[str]] = {}
+    for field in fields:
+        name = str(field.get("name") or "")
+        options = field.get("options") or {}
+        choices = options.get("choices") or []
+        if not name or not choices:
+            continue
+        out[name] = {str(choice.get("name")) for choice in choices if choice.get("name")}
+    return out
+
+
 def version_label(source_type: str, version_no: int) -> str:
     if source_type == "local_llm_ocr":
         return f"RAW-v{version_no}"
@@ -120,6 +136,7 @@ def version_label(source_type: str, version_no: int) -> str:
 def build_fields(
     row: tuple[Any, ...],
     doc_record_id: str | None,
+    allowed_choices: dict[str, set[str]],
 ) -> dict[str, Any]:
     (
         ext_id,
@@ -154,12 +171,15 @@ def build_fields(
         "created_by": created_by or "",
         "created_at": created_at.isoformat() if created_at else "",
     }
-    if cat_label:
+    if cat_label and cat_label in allowed_choices.get("ai_category", set()):
         fields["ai_category"] = cat_label
-    if doc_type:
+    if doc_type and doc_type in allowed_choices.get("ai_doc_type", set()):
         fields["ai_doc_type"] = doc_type
     if norm_tags:
-        fields["ai_tags"] = norm_tags
+        allowed_tags = allowed_choices.get("ai_tags", set())
+        valid_tags = [tag for tag in norm_tags if tag in allowed_tags]
+        if valid_tags:
+            fields["ai_tags"] = valid_tags
     if doc_record_id:
         fields["document"] = {"id": doc_record_id}
     return fields
@@ -227,6 +247,7 @@ def main() -> int:
 
     doc_map = fetch_doc_record_map(cfg)
     ext_map = fetch_extraction_record_map(cfg)
+    allowed_choices = fetch_allowed_select_choices(cfg)
     created = updated = failed = skipped = 0
     t0 = time.perf_counter()
 
@@ -239,7 +260,7 @@ def main() -> int:
                 skipped += 1
                 print(f"[SKIP] ext_id={ext_id} doc_id={doc_id} missing OwnCloud link")
                 continue
-            fields = build_fields(row, doc_record)
+            fields = build_fields(row, doc_record, allowed_choices)
             record_id = ext_map.get(ext_id)
             try:
                 teable_id = upsert_record(cfg, fields, record_id, args.dry_run)
