@@ -1,4 +1,4 @@
-"""Gemini vision OCR tasks (image-only; separate API key)."""
+"""Gemini vision OCR tasks via Google Generative Language API."""
 
 from __future__ import annotations
 
@@ -27,11 +27,17 @@ VISION_PROMPT = (
 
 def vision_api_config() -> dict[str, str]:
     load_dotenv(ENV_FILE)
-    key = os.environ.get("AI_BOX_VISION_API_KEY", "").strip()
-    url = os.environ.get("AI_BOX_API_URL", "https://api.ai-box.vn").rstrip("/")
-    model = os.environ.get("AI_BOX_VISION_MODEL", "gemini-3-flash").strip()
+    key = (
+        os.environ.get("GOOGLE_API_KEY", "").strip()
+        or os.environ.get("GOOGLE_VISION_API_KEY", "").strip()
+    )
+    url = os.environ.get(
+        "GOOGLE_API_URL",
+        "https://generativelanguage.googleapis.com/v1beta",
+    ).rstrip("/")
+    model = os.environ.get("GOOGLE_VISION_MODEL", "gemini-2.5-flash").strip()
     if not key:
-        raise RuntimeError("AI_BOX_VISION_API_KEY missing in .env")
+        raise RuntimeError("GOOGLE_API_KEY (or GOOGLE_VISION_API_KEY) missing in .env")
     return {"key": key, "url": url, "model": model}
 
 
@@ -58,24 +64,20 @@ def _image_bytes_for_path(path: Path) -> tuple[bytes, str]:
 
 def call_vision_ocr(image_bytes: bytes, mime: str, cfg: dict[str, str]) -> str:
     b64 = base64.standard_b64encode(image_bytes).decode("ascii")
-    endpoint = f"{cfg['url']}/v1/chat/completions"
+    endpoint = f"{cfg['url']}/models/{cfg['model']}:generateContent?key={cfg['key']}"
     payload = {
-        "model": cfg["model"],
-        "messages": [
+        "contents": [
             {
                 "role": "user",
-                "content": [
-                    {"type": "text", "text": VISION_PROMPT},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:{mime};base64,{b64}"},
-                    },
+                "parts": [
+                    {"text": VISION_PROMPT},
+                    {"inline_data": {"mime_type": mime, "data": b64}},
                 ],
             }
         ],
-        "temperature": 0.0,
+        "generationConfig": {"temperature": 0.0},
     }
-    headers = {"Authorization": f"Bearer {cfg['key']}", "Content-Type": "application/json"}
+    headers = {"Content-Type": "application/json"}
     rate_limit = os.environ.get("CELERY_VISION_RATE_LIMIT", "10/m")
     _ = rate_limit  # enforced via Celery task decorator
     for attempt in range(6):
@@ -84,7 +86,13 @@ def call_vision_ocr(image_bytes: bytes, mime: str, cfg: dict[str, str]) -> str:
             time.sleep(min(90, 5 * (2**attempt)))
             continue
         response.raise_for_status()
-        return str(response.json()["choices"][0]["message"]["content"]).strip()
+        data = response.json()
+        candidates = data.get("candidates") or []
+        if not candidates:
+            return ""
+        parts = candidates[0].get("content", {}).get("parts", [])
+        texts = [str(part.get("text", "")) for part in parts if part.get("text")]
+        return "\n".join(texts).strip()
     raise RuntimeError("Vision API rate limited after retries")
 
 

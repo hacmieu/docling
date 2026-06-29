@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--doc-id", type=int, action="append", default=[])
     parser.add_argument("--drive-prefix", default="project/hth-shared-drive")
-    parser.add_argument("--sleep-seconds", type=float, default=6.0, help="~10 RPM")
+    parser.add_argument("--sleep-seconds", type=float, default=12.0, help="Slow free-tier pacing")
     parser.add_argument("--skip-existing", action="store_true", default=True)
     parser.add_argument("--log-file", type=Path, default=None)
     return parser.parse_args()
