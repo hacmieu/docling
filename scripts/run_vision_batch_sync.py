@@ -15,6 +15,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from workspace.ocr_pipeline.db_postgres import connect, load_dotenv
+from workspace.ocr_pipeline.pipeline_config import load_pipeline_config
 from workspace.ocr_pipeline.tasks.vision_tasks import vision_ocr_document
 from workspace.ocr_pipeline.teable_incremental_sync import TeableSyncContext, sync_extraction_and_document
 
@@ -26,7 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--doc-id", type=int, action="append", default=[])
     parser.add_argument("--drive-prefix", default="project/hth-shared-drive")
-    parser.add_argument("--sleep-seconds", type=float, default=12.0, help="Slow free-tier pacing")
+    parser.add_argument("--sleep-seconds", type=float, default=None, help="Slow free-tier pacing")
     parser.add_argument("--skip-existing", action="store_true", default=True)
     parser.add_argument(
         "--sync-teable",
@@ -81,7 +82,10 @@ def log_line(log_file: Path | None, message: str) -> None:
 
 def main() -> int:
     load_dotenv()
+    pipeline = load_pipeline_config()
     args = parse_args()
+    if args.sleep_seconds is None:
+        args.sleep_seconds = pipeline.vision_batch_sleep_seconds
     stamp = datetime.now().strftime("%Y%m%d_%H%M")
     log_file = args.log_file or (DEFAULT_LOG / f"{stamp}-vision-batch.log")
     ids = select_doc_ids(args.doc_id, args.drive_prefix, args.limit, args.skip_existing)
@@ -105,7 +109,7 @@ def main() -> int:
             log_line(
                 log_file,
                 f"[OK] doc_id={doc_id} extraction_id={result.get('extraction_id')} "
-                f"text_len={result.get('text_len')}",
+                f"text_len={result.get('text_len')} enrich={result.get('enrich_status')}",
             )
             if teable_ctx is not None and result.get("extraction_id"):
                 sync_result = sync_extraction_and_document(
@@ -122,10 +126,11 @@ def main() -> int:
                 else:
                     teable_ok += 1
                     action = "created" if sync_result.get("created") else "updated"
-                    inherited = " ai_inherited" if sync_result.get("ai_metadata_inherited") else ""
+                    inherited = " ai_inherited" if sync_result.get("enrich_status") == "inherit_fallback" else ""
+                    enriched = " ai_enriched" if sync_result.get("enrich_status") == "enriched" else ""
                     log_line(
                         log_file,
-                        f"[TEABLE-OK] doc_id={doc_id} extraction_{action}{inherited} "
+                        f"[TEABLE-OK] doc_id={doc_id} extraction_{action}{enriched}{inherited} "
                         f"owncloud_patched={sync_result.get('owncloud_patched')}",
                     )
         else:

@@ -34,6 +34,8 @@
 !extraction_priority.py
 !metadata_normalize.py
 !concept_search.py
+!pipeline_config.py
+!ai_enrich.py
 !teable_incremental_sync.py
 !extraction_store.py
 !search_qa.py

@@ -5,42 +5,22 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 import time
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-import requests
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from workspace.ocr_pipeline.db_postgres import connect, link_document_tags, load_dotenv
+from workspace.ocr_pipeline.ai_enrich import call_ai_enrich, enrich_api_config
 from workspace.ocr_pipeline.extraction_store import upsert_deepseek_extraction
+from workspace.ocr_pipeline.pipeline_config import load_pipeline_config
 
 ENV_FILE = REPO_ROOT / ".env"
-MAX_MARKDOWN_CHARS = 12000
-
-ENRICH_PROMPT = """Bạn là chuyên gia phân loại tài liệu hành chính/pháp lý tiếng Việt.
-
-Phân tích markdown OCR và trả về ĐÚNG một JSON object (không bọc ```), schema:
-{{
-  "doc_type": "string",
-  "category": "string",
-  "tags": ["tag1", "tag2"],
-  "key_fields": {{"ten": "...", "so": "...", "ngay": "...", "don_vi": "..."}},
-  "ocr_quality": "tot|kha|yeu",
-  "review_vi": "đoạn tóm tắt ngắn bằng tiếng Việt"
-}}
-
-Tên file: {filename}
-
---- OCR MARKDOWN ---
-{markdown}
-"""
 
 
 @dataclass
@@ -79,40 +59,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def api_config() -> dict[str, str]:
-    load_dotenv(ENV_FILE)
-    key = os.environ.get("AI_BOX_API_KEY", "").strip()
-    url = os.environ.get("AI_BOX_API_URL", "https://api.ai-box.vn").rstrip("/")
-    model = os.environ.get("AI_BOX_MODEL", "deepseek-v4-pro").strip()
-    if not key:
-        raise RuntimeError("AI_BOX_API_KEY missing in .env")
-    return {"key": key, "url": url, "model": model}
-
-
-def call_ai_enrich(markdown: str, filename: str, cfg: dict[str, str]) -> dict[str, object]:
-    prompt = ENRICH_PROMPT.format(
-        filename=filename,
-        markdown=markdown[:MAX_MARKDOWN_CHARS],
-    )
-    endpoint = f"{cfg['url']}/v1/chat/completions"
-    payload = {
-        "model": cfg["model"],
-        "messages": [
-            {"role": "system", "content": "Trả về JSON hợp lệ duy nhất, không thêm text ngoài JSON."},
-            {"role": "user", "content": prompt},
-        ],
-        "temperature": 0.1,
-        "response_format": {"type": "json_object"},
-    }
-    headers = {"Authorization": f"Bearer {cfg['key']}", "Content-Type": "application/json"}
-    for attempt in range(5):
-        response = requests.post(endpoint, headers=headers, json=payload, timeout=120)
-        if response.status_code == 429:
-            time.sleep(min(60, 5 * (2**attempt)))
-            continue
-        response.raise_for_status()
-        content = response.json()["choices"][0]["message"]["content"]
-        return json.loads(content)
-    raise RuntimeError("AI API rate limited")
+    return enrich_api_config("raw", load_pipeline_config())
 
 
 def default_sla_report_path() -> Path:
@@ -189,7 +136,10 @@ def main() -> int:
             processed += 1
             print(f"[AI] id={doc_id} file={filename} started={sla.started_at}")
             try:
-                data = call_ai_enrich(md, filename, cfg)
+                pipeline = load_pipeline_config()
+                data = call_ai_enrich(
+                    md, filename, cfg, max_chars=pipeline.enrich_max_chars
+                )
                 tags = [str(t) for t in data.get("tags", []) if str(t).strip()]
                 finished_at = datetime.now(UTC)
                 duration = round(time.perf_counter() - t0, 3)

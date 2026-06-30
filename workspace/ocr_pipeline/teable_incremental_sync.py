@@ -24,7 +24,9 @@ from scripts.sync_extractions_to_teable import (  # noqa: E402
     upsert_record,
 )
 from workspace.ocr_pipeline.db_postgres import connect, load_dotenv
+from workspace.ocr_pipeline.pipeline_config import load_pipeline_config
 from workspace.ocr_pipeline.extraction_store import inherit_document_ai_metadata
+from workspace.ocr_pipeline.ai_enrich import enrich_extraction_from_ocr_text
 from workspace.ocr_pipeline.teable_catalog import teable_config, teable_headers
 
 MIGRATION_005 = (
@@ -106,6 +108,47 @@ def _fetch_extraction_row(extraction_id: int) -> tuple[Any, ...] | None:
         return conn.execute(sql, (extraction_id,)).fetchone()
 
 
+def ensure_vision_extraction_enriched(
+    conn: Any,
+    document_id: int,
+    extraction_id: int,
+) -> str | None:
+    """Enrich vision row if ai_* empty; returns status token or None if already filled."""
+    row = conn.execute(
+        "SELECT category, raw_text, source_type FROM document_extractions WHERE id = %s",
+        (extraction_id,),
+    ).fetchone()
+    if not row:
+        return None
+    category, raw_text, source_type = row
+    config = load_pipeline_config()
+    if source_type not in {config.source_vision, "google_vision", "ai_vision"}:
+        return None
+    if category:
+        return None
+    if not config.vision_enrich_enabled:
+        if config.vision_enrich_fallback_inherit:
+            inherit_document_ai_metadata(conn, document_id, extraction_id)
+            return "inherit_fallback"
+        return None
+    doc = conn.execute(
+        "SELECT owncloud_path, source_path FROM documents WHERE id = %s",
+        (document_id,),
+    ).fetchone()
+    filename = Path((doc[0] if doc else None) or (doc[1] if doc else None) or "unknown").name
+
+    try:
+        enrich_extraction_from_ocr_text(
+            conn, extraction_id, raw_text or "", filename, "vision", config
+        )
+        return "enriched"
+    except Exception:
+        if config.vision_enrich_fallback_inherit:
+            inherit_document_ai_metadata(conn, document_id, extraction_id)
+            return "inherit_fallback"
+        raise
+
+
 def _patch_owncloud_row(
     ctx: TeableSyncContext,
     document_id: int,
@@ -163,9 +206,9 @@ def sync_extraction_and_document(
 
     try:
         with connect() as conn:
-            inherited = inherit_document_ai_metadata(conn, document_id, extraction_id)
-            if inherited:
-                result["ai_metadata_inherited"] = True
+            enrich_status = ensure_vision_extraction_enriched(conn, document_id, extraction_id)
+            if enrich_status:
+                result["enrich_status"] = enrich_status
         row = _fetch_extraction_row(extraction_id)
         if not row:
             result["error"] = "extraction not found after inherit"

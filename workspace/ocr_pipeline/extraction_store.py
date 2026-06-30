@@ -104,12 +104,15 @@ def upsert_deepseek_extraction(
     summary: str,
     model_name: str,
 ) -> int:
-    """Insert or refresh deepseek_cleanup row for a document."""
+    """Insert or refresh RAW-enrich row (lane 1: EasyOCR => AI metadata)."""
     from workspace.ocr_pipeline.metadata_normalize import (
         normalize_category,
         normalize_doc_type,
         normalize_tags,
     )
+    from workspace.ocr_pipeline.pipeline_config import load_pipeline_config
+
+    source_type = load_pipeline_config().source_raw_enrich
 
     cat_slug, cat_label = normalize_category(category)
     type_slug, _ = normalize_doc_type(doc_type)
@@ -117,10 +120,10 @@ def upsert_deepseek_extraction(
     existing = conn.execute(
         """
         SELECT id FROM document_extractions
-        WHERE document_id = %s AND source_type = 'deepseek_cleanup'
+        WHERE document_id = %s AND source_type = %s
         ORDER BY id DESC LIMIT 1
         """,
-        (document_id,),
+        (document_id, source_type),
     ).fetchone()
     if existing:
         extraction_id = int(existing[0])
@@ -155,13 +158,14 @@ def upsert_deepseek_extraction(
         INSERT INTO document_extractions (
             document_id, version_no, source_type, priority_score, version_status,
             category, doc_type, tags, key_fields, extracted_summary, model_name, created_by
-        ) VALUES (%s, %s, 'deepseek_cleanup', %s, 'active', %s, %s, %s::jsonb, %s::jsonb, %s, %s, %s)
+        ) VALUES (%s, %s, %s, %s, 'active', %s, %s, %s::jsonb, %s::jsonb, %s, %s, %s)
         RETURNING id
         """,
         (
             document_id,
             version_no,
-            SOURCE_PRIORITY["deepseek_cleanup"],
+            source_type,
+            SOURCE_PRIORITY.get(source_type, SOURCE_PRIORITY["deepseek_cleanup"]),
             cat_label or category,
             type_slug or doc_type,
             json.dumps(norm_tags, ensure_ascii=False),
