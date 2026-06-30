@@ -4,7 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
-- [20260630_2240-search-ui-deepseek.md](./20260630_2240-search-ui-deepseek.md): UI /search — tokens + nút DeepSeek tổng hợp.
+- [20260630_2308-synthesize-context-token-fix.md](./20260630_2308-synthesize-context-token-fix.md): Fix prompt synthesize; UI context + tokens trước gửi.
 - [20260630_1925-gemini-deepseek-metadata-rollout.md](./20260630_1925-gemini-deepseek-metadata-rollout.md): Triển khai schema + 2-step enrich + backfill vision DSv4 Pro.
 - [20260630_1917-gemini-ocr-deepseek-enrich-playbook.md](./20260630_1917-gemini-ocr-deepseek-enrich-playbook.md): Gemini OCR + DSv4 Pro enrich; env aibox; thu hẹp search.
 - [20260630_1914-two-pass-ai-metadata-playbook.md](./20260630_1914-two-pass-ai-metadata-playbook.md): OCR + enrich (lượt 2) đã có; Gemini chưa single-pass.

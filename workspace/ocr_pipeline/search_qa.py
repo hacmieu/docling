@@ -107,17 +107,35 @@ def answer_from_search_items(
     }
 
 
-SYNTHESIZE_PROMPT = """Bạn là trợ lý nội bộ Bệnh viện Hưng Thịnh.
+def estimate_tokens(text: str) -> int:
+    """Rough token count (≈4 chars/token for Vietnamese + JSON)."""
+    return max(1, len(text) // 4)
 
-Câu hỏi: {question}
 
-Dưới đây là metadata đã lọc từ catalog (doc_type, key_fields, summary). Chỉ trả lời dựa trên dữ liệu này.
-Nếu không đủ thông tin, nói rõ phần nào thiếu. Trả lời tiếng Việt, có bullet nếu cần.
-Cuối câu trả lời liệt kê doc_id tham chiếu.
-
---- DỮ LIỆU ĐÃ LỌC ---
-{context}
-"""
+def build_synthesis_messages(
+    question: str,
+    context_block: str,
+    doc_count: int,
+) -> list[dict[str, str]]:
+    """Build chat messages; context_block is metadata-only (no duplicate question header)."""
+    user_content = (
+        f"Bạn là trợ lý nội bộ Bệnh viện Hưng Thịnh.\n\n"
+        f"NHIỆM VỤ: Trả lời CÂU HỎI bằng tiếng Việt, CHỈ dựa trên DỮ LIỆU CATALOG bên dưới "
+        f"({doc_count} tài liệu). Không được yêu cầu người dùng đặt câu hỏi khác nếu đã có dữ liệu.\n"
+        f"Cuối câu trả lời liệt kê doc_id tham chiếu.\n\n"
+        f"CÂU HỎI:\n{question.strip()}\n\n"
+        f"DỮ LIỆU CATALOG:\n{context_block.strip()}"
+    )
+    return [
+        {
+            "role": "system",
+            "content": (
+                "Tổng hợp metadata hành chính y tế. Luôn trả lời từ dữ liệu được cung cấp; "
+                "không từ chối vì thiếu câu hỏi khi đã có block DỮ LIỆU CATALOG."
+            ),
+        },
+        {"role": "user", "content": user_content},
+    ]
 
 
 def synthesize_from_context_pack(
@@ -127,18 +145,19 @@ def synthesize_from_context_pack(
     doc_count: int = 0,
 ) -> dict[str, Any]:
     """DeepSeek synthesis over a pre-built llm_prompt_block."""
+    context_block = context_block.strip()
+    if doc_count < 1:
+        raise ValueError("doc_count phải >= 1 — bấm Tìm kiếm và chọn ít nhất 1 tài liệu")
+    if len(context_block) < 80:
+        raise ValueError("Context quá ngắn — dữ liệu catalog chưa được nạp vào prompt")
+
     cfg = text_api_config()
-    prompt = SYNTHESIZE_PROMPT.format(question=question, context=context_block)
+    messages = build_synthesis_messages(question, context_block, doc_count)
+    user_content = messages[1]["content"]
     endpoint = f"{cfg['url']}/v1/chat/completions"
     payload = {
         "model": cfg["model"],
-        "messages": [
-            {
-                "role": "system",
-                "content": "Trả lời súc tích bằng tiếng Việt, chỉ dựa trên context được cung cấp.",
-            },
-            {"role": "user", "content": prompt},
-        ],
+        "messages": messages,
         "temperature": 0.2,
     }
     headers = {"Authorization": f"Bearer {cfg['key']}", "Content-Type": "application/json"}
@@ -149,13 +168,13 @@ def synthesize_from_context_pack(
             continue
         response.raise_for_status()
         answer = str(response.json()["choices"][0]["message"]["content"]).strip()
-        input_chars = len(prompt)
         return {
             "question": question,
             "answer": answer,
             "model": cfg["model"],
-            "input_chars": input_chars,
-            "estimated_tokens_input": max(1, input_chars // 4),
+            "input_chars": len(user_content),
+            "estimated_tokens_input": estimate_tokens(user_content),
             "doc_count": doc_count,
+            "context_chars": len(context_block),
         }
     raise RuntimeError("AI API rate limited")

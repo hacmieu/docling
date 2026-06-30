@@ -486,6 +486,9 @@ def build_handler(db: PgCatalogDb, static_dir: Path):
                 return
             try:
                 result = db.synthesize_context(question, context_block, doc_count)
+            except ValueError as exc:
+                self._send_json({"ok": False, "error": str(exc)}, 400)
+                return
             except Exception as exc:
                 self._send_json({"ok": False, "error": str(exc)}, 502)
                 return

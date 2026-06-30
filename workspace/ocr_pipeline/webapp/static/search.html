@@ -141,10 +141,23 @@
         background: var(--panel);
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        gap: 12px;
+        overflow: auto;
+        max-height: calc(100vh - 160px);
       }
       .aside h2 { margin: 0; font-size: 15px; }
-      textarea { min-height: 80px; resize: vertical; width: 100%; }
+      textarea { resize: vertical; width: 100%; }
+      #question { min-height: 72px; }
+      #contextBlock { min-height: 140px; font-family: ui-monospace, monospace; font-size: 11px; }
+      .token-panel {
+        background: #0f172a;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 12px;
+      }
+      .token-panel.warn { border-color: var(--warn); }
+      .token-panel.ok { border-color: var(--ok); }
       .answer-box {
         background: #0f172a;
         border: 1px solid var(--border);
@@ -194,6 +207,7 @@
         <table>
           <thead>
             <tr>
+              <th><input type="checkbox" id="selectAll" title="Chọn tất cả" /></th>
               <th>ID</th>
               <th>Loại</th>
               <th>Key fields</th>
@@ -201,15 +215,30 @@
             </tr>
           </thead>
           <tbody id="rows">
-            <tr><td colspan="4" style="padding:24px;color:var(--muted)">Nhập tên hoặc chọn chế độ bằng cấp rồi bấm Tìm kiếm.</td></tr>
+            <tr><td colspan="5" style="padding:24px;color:var(--muted)">Nhập tên hoặc chọn chế độ bằng cấp rồi bấm Tìm kiếm.</td></tr>
           </tbody>
         </table>
       </section>
 
       <aside class="aside">
         <h2>DeepSeek tổng hợp</h2>
+
+        <div class="token-panel" id="tokenPanel">
+          <div><strong id="tokenTotal">~0 tokens</strong> ước lượng trước khi gửi</div>
+          <div style="color:var(--muted);margin-top:4px">
+            Câu hỏi: <span id="tokenQ">0</span> · Context: <span id="tokenCtx">0</span> ·
+            <span id="tokenDocs">0</span> tài liệu
+          </div>
+        </div>
+
         <label style="font-size:12px;color:var(--muted)">Câu hỏi gửi LLM</label>
         <textarea id="question" placeholder="VD: Tóm tắt hồ sơ và liệt kê chứng chỉ còn hiệu lực">Tóm tắt toàn bộ hồ sơ và các giấy tờ quan trọng</textarea>
+
+        <label style="font-size:12px;color:var(--muted)">
+          Context gửi kèm (sửa / bớt dòng để giảm tokens)
+        </label>
+        <textarea id="contextBlock" placeholder="Sau khi Tìm kiếm, metadata catalog hiện ở đây…" readonly></textarea>
+
         <button class="primary" id="synthBtn" disabled>Gửi DeepSeek tổng hợp</button>
         <div id="synthStatus"></div>
         <div class="answer-box empty" id="answer">Kết quả trả lời sẽ hiển thị ở đây.</div>
@@ -226,12 +255,62 @@
       const statsEl = document.getElementById("stats");
       const rowsEl = document.getElementById("rows");
       const questionEl = document.getElementById("question");
+      const contextEl = document.getElementById("contextBlock");
       const synthBtn = document.getElementById("synthBtn");
       const synthStatus = document.getElementById("synthStatus");
       const answerEl = document.getElementById("answer");
       const modelTag = document.getElementById("modelTag");
+      const selectAllEl = document.getElementById("selectAll");
+      const tokenPanel = document.getElementById("tokenPanel");
+      const tokenTotal = document.getElementById("tokenTotal");
+      const tokenQ = document.getElementById("tokenQ");
+      const tokenCtx = document.getElementById("tokenCtx");
+      const tokenDocs = document.getElementById("tokenDocs");
 
       let currentPack = null;
+      let allDocuments = [];
+      const selectedIds = new Set();
+
+      function estimateTokens(text) {
+        return Math.max(1, Math.ceil(String(text || "").length / 4));
+      }
+
+      function buildContextFromDocs(docs, queryLabel) {
+        const lines = [`# ${docs.length} tài liệu — ${queryLabel}`, ""];
+        for (const d of docs) {
+          const kf = JSON.stringify(d.key_fields || {}, null, 0);
+          let block = `[doc_id=${d.doc_id}] type=${d.doc_type || "—"} path=.../${d.path_tail || ""}\nkey_fields=${kf}\n`;
+          if (d.summary) block += `summary=${String(d.summary).slice(0, 400)}\n`;
+          lines.push(block);
+        }
+        return lines.join("\n");
+      }
+
+      function updateTokenPanel() {
+        const q = questionEl.value.trim();
+        const ctx = contextEl.value.trim();
+        const docs = allDocuments.filter((d) => selectedIds.has(d.doc_id));
+        const tQ = estimateTokens(q);
+        const tCtx = estimateTokens(ctx);
+        const tTotal = estimateTokens(q + "\n\n" + ctx);
+        tokenQ.textContent = `~${tQ}`;
+        tokenCtx.textContent = `~${tCtx}`;
+        tokenDocs.textContent = String(docs.length);
+        tokenTotal.textContent = `~${tTotal} tokens`;
+        const ok = docs.length > 0 && ctx.length >= 80 && q.length >= 5;
+        tokenPanel.classList.toggle("ok", ok);
+        tokenPanel.classList.toggle("warn", !ok);
+        synthBtn.disabled = !ok;
+        contextEl.readOnly = docs.length === 0;
+      }
+
+      function rebuildContext() {
+        if (!currentPack) return;
+        const docs = allDocuments.filter((d) => selectedIds.has(d.doc_id));
+        const label = currentPack.query || queryEl.value.trim() || "catalog";
+        contextEl.value = buildContextFromDocs(docs, label);
+        updateTokenPanel();
+      }
 
       function esc(s) {
         return String(s)
@@ -262,6 +341,9 @@
         statsEl.innerHTML = '<span class="loading">Đang tìm…</span>';
         rowsEl.innerHTML = "";
         currentPack = null;
+        allDocuments = [];
+        selectedIds.clear();
+        contextEl.value = "";
         synthBtn.disabled = true;
         answerEl.textContent = "Kết quả trả lời sẽ hiển thị ở đây.";
         answerEl.classList.add("empty");
@@ -282,7 +364,7 @@
           renderResults(data);
         } catch (err) {
           statsEl.innerHTML = `<span class="error">${esc(err.message)}</span>`;
-          rowsEl.innerHTML = `<tr><td colspan="4" class="error">${esc(err.message)}</td></tr>`;
+          rowsEl.innerHTML = `<tr><td colspan="5" class="error">${esc(err.message)}</td></tr>`;
         } finally {
           searchBtn.disabled = false;
         }
@@ -290,36 +372,81 @@
 
       function renderResults(data) {
         const docs = data.documents || [];
+        allDocuments = docs;
+        selectedIds.clear();
+        docs.forEach((d) => selectedIds.add(d.doc_id));
+        if (selectAllEl) selectAllEl.checked = docs.length > 0;
+
         statsEl.innerHTML = `
           <span><strong>${docs.length}</strong> tài liệu</span>
-          <span class="token-badge">~${data.estimated_tokens_prompt || 0} tokens (prompt)</span>
-          <span class="token-badge">~${data.estimated_tokens_json || 0} tokens (JSON)</span>
-          <span>${data.prompt_chars || 0} ký tự context</span>
+          <span class="token-badge">~${data.estimated_tokens_prompt || 0} tokens (metadata)</span>
+          <span>${data.prompt_chars || 0} ký tự</span>
         `;
         if (docs.length === 0) {
-          rowsEl.innerHTML = `<tr><td colspan="4" style="color:var(--muted)">Không có kết quả.</td></tr>`;
+          rowsEl.innerHTML = `<tr><td colspan="5" style="color:var(--muted)">Không có kết quả — thử「Toàn catalog」hoặc đổi từ khóa.</td></tr>`;
+          contextEl.value = "";
+          updateTokenPanel();
           return;
         }
-        synthBtn.disabled = false;
+        contextEl.value = data.llm_prompt_block || buildContextFromDocs(docs, data.query || "");
+        updateTokenPanel();
+
         rowsEl.innerHTML = docs.map((d) => `
-          <tr>
+          <tr data-id="${d.doc_id}">
+            <td><input type="checkbox" class="doc-check" data-id="${d.doc_id}" checked /></td>
             <td>${d.doc_id}</td>
             <td><span class="doc-type">${esc(d.doc_type || "—")}</span></td>
             <td class="kf">${kfPreview(d.key_fields)}</td>
             <td class="summary">${esc((d.summary || "").slice(0, 200))}${(d.summary || "").length > 200 ? "…" : ""}</td>
           </tr>
         `).join("");
+
+        document.querySelectorAll(".doc-check").forEach((cb) => {
+          cb.addEventListener("change", (e) => {
+            const id = Number(e.target.dataset.id);
+            if (e.target.checked) selectedIds.add(id);
+            else selectedIds.delete(id);
+            if (selectAllEl) {
+              selectAllEl.checked = selectedIds.size === allDocuments.length;
+            }
+            rebuildContext();
+          });
+        });
       }
 
+      if (selectAllEl) {
+        selectAllEl.addEventListener("change", () => {
+          selectedIds.clear();
+          if (selectAllEl.checked) {
+            allDocuments.forEach((d) => selectedIds.add(d.doc_id));
+          }
+          document.querySelectorAll(".doc-check").forEach((cb) => {
+            cb.checked = selectAllEl.checked;
+          });
+          rebuildContext();
+        });
+      }
+
+      questionEl.addEventListener("input", updateTokenPanel);
+      contextEl.addEventListener("input", updateTokenPanel);
+
       async function runSynthesize() {
-        if (!currentPack || !currentPack.llm_prompt_block) return;
         const question = questionEl.value.trim();
+        const contextBlock = contextEl.value.trim();
+        const docCount = selectedIds.size;
+
         if (!question) {
           synthStatus.innerHTML = '<span class="error">Nhập câu hỏi.</span>';
           return;
         }
+        if (docCount < 1 || contextBlock.length < 80) {
+          synthStatus.innerHTML = '<span class="error">Chưa có dữ liệu — bấm Tìm kiếm và chọn ít nhất 1 tài liệu.</span>';
+          return;
+        }
+
         synthBtn.disabled = true;
-        synthStatus.innerHTML = '<span class="loading">DeepSeek đang tổng hợp… (~' + (currentPack.estimated_tokens_prompt || 0) + ' tokens input)</span>';
+        const est = estimateTokens(question + "\n\n" + contextBlock);
+        synthStatus.innerHTML = `<span class="loading">DeepSeek đang tổng hợp… (~${est} tokens)</span>`;
         answerEl.textContent = "";
         answerEl.classList.remove("empty");
 
@@ -329,21 +456,22 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               question,
-              llm_prompt_block: currentPack.llm_prompt_block,
-              doc_count: currentPack.doc_count,
+              llm_prompt_block: contextBlock,
+              doc_count: docCount,
             }),
           });
           const data = await res.json();
           if (!data.ok) throw new Error(data.error || "Lỗi AI");
           answerEl.textContent = data.answer;
-          modelTag.textContent = `${data.model || "deepseek"} · input ~${data.estimated_tokens_input || "?"} tokens`;
+          modelTag.textContent =
+            `${data.model || "deepseek"} · gửi ~${data.estimated_tokens_input || est} tokens · ${data.doc_count} doc`;
           synthStatus.innerHTML = "";
         } catch (err) {
           synthStatus.innerHTML = `<span class="error">${esc(err.message)}</span>`;
           answerEl.textContent = "Lỗi khi gọi DeepSeek.";
           answerEl.classList.add("empty");
         } finally {
-          synthBtn.disabled = !currentPack;
+          updateTokenPanel();
         }
       }
 

@@ -266,7 +266,8 @@ def search_context_pack(
 
 
 def format_llm_prompt_block(query: str, documents: list[dict[str, Any]]) -> str:
-    lines = [f"Câu hỏi: {query}", f"Số tài liệu: {len(documents)}", ""]
+    """Metadata-only block for synthesis (user question is sent separately)."""
+    lines = [f"# {len(documents)} tài liệu — {query}", ""]
     for doc in documents:
         kf = doc.get("key_fields") or {}
         kf_short = json.dumps(kf, ensure_ascii=False)
