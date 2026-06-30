@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260630_1805-staff-search-guide-report.md](./20260630_1805-staff-search-guide-report.md): Hướng dẫn tìm bác sĩ (Teable/API/SQL); ví dụ Trần Đức Hiển 7 doc.
 - [20260630_1747-dev-best-results-report.md](./20260630_1747-dev-best-results-report.md): DEV hoàn tất vision 21/21; Teable ERD ready trừ 1 orphan link.
 - [20260630_1605-status-check-report.md](./20260630_1605-status-check-report.md): Báo cáo hiện trạng 498 success; còn 21 JPG pending lane vision.
 - [20260630_1115-asr-vision-sequential-report.md](./20260630_1115-asr-vision-sequential-report.md): ASR 498/498; vision JPG blocked Google 429 RPM.
