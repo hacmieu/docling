@@ -16,6 +16,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from workspace.ocr_pipeline.db_postgres import connect, load_dotenv
 from workspace.ocr_pipeline.tasks.vision_tasks import vision_ocr_document
+from workspace.ocr_pipeline.teable_incremental_sync import TeableSyncContext, sync_extraction_and_document
 
 DEFAULT_LOG = REPO_ROOT / "workspace/ocr_pipeline/09_logs"
 
@@ -27,6 +28,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--drive-prefix", default="project/hth-shared-drive")
     parser.add_argument("--sleep-seconds", type=float, default=12.0, help="Slow free-tier pacing")
     parser.add_argument("--skip-existing", action="store_true", default=True)
+    parser.add_argument(
+        "--sync-teable",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Push each finished vision extraction to Teable immediately (default: on).",
+    )
     parser.add_argument("--log-file", type=Path, default=None)
     return parser.parse_args()
 
@@ -82,9 +89,12 @@ def main() -> int:
         log_line(log_file, "No documents for vision OCR.")
         return 0
 
-    ok = fail = 0
+    ok = fail = teable_ok = teable_fail = 0
     t0 = time.perf_counter()
     log_line(log_file, f"Vision batch start: {len(ids)} doc(s) at {datetime.now(UTC).isoformat()}")
+    if args.sync_teable:
+        log_line(log_file, "Teable incremental sync: ON (per document after OCR)")
+    teable_ctx = TeableSyncContext.load() if args.sync_teable else None
 
     for doc_id in ids:
         started = datetime.now(UTC).isoformat()
@@ -97,6 +107,26 @@ def main() -> int:
                 f"[OK] doc_id={doc_id} extraction_id={result.get('extraction_id')} "
                 f"text_len={result.get('text_len')}",
             )
+            if teable_ctx is not None and result.get("extraction_id"):
+                sync_result = sync_extraction_and_document(
+                    teable_ctx,
+                    doc_id,
+                    int(result["extraction_id"]),
+                )
+                if sync_result.get("error"):
+                    teable_fail += 1
+                    log_line(
+                        log_file,
+                        f"[TEABLE-FAIL] doc_id={doc_id} error={sync_result.get('error')}",
+                    )
+                else:
+                    teable_ok += 1
+                    action = "created" if sync_result.get("created") else "updated"
+                    log_line(
+                        log_file,
+                        f"[TEABLE-OK] doc_id={doc_id} extraction_{action} "
+                        f"owncloud_patched={sync_result.get('owncloud_patched')}",
+                    )
         else:
             fail += 1
             log_line(log_file, f"[FAIL] doc_id={doc_id} error={result.get('error')}")
@@ -105,8 +135,8 @@ def main() -> int:
 
     duration = round(time.perf_counter() - t0, 1)
     summary = (
-        f"Vision batch end: ok={ok} fail={fail} duration={duration}s "
-        f"finished={datetime.now(UTC).isoformat()}"
+        f"Vision batch end: ok={ok} fail={fail} teable_ok={teable_ok} teable_fail={teable_fail} "
+        f"duration={duration}s finished={datetime.now(UTC).isoformat()}"
     )
     log_line(log_file, summary)
     report = {
@@ -115,6 +145,9 @@ def main() -> int:
         "duration_seconds": duration,
         "ok": ok,
         "fail": fail,
+        "teable_ok": teable_ok,
+        "teable_fail": teable_fail,
+        "sync_teable": args.sync_teable,
         "doc_ids": ids,
     }
     report_path = log_file.with_suffix(".json")

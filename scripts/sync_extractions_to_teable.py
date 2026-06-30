@@ -32,8 +32,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--source-type",
         action="append",
-        choices=["local_llm_ocr", "deepseek_cleanup"],
-        help="Filter source types (default: both RAW and DeepSeek).",
+        choices=["local_llm_ocr", "deepseek_cleanup", "google_vision"],
+        help="Filter source types (default: RAW, DeepSeek, and Google Vision).",
     )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--sleep-seconds", type=float, default=0.1)
@@ -130,6 +130,8 @@ def version_label(source_type: str, version_no: int) -> str:
         return f"RAW-v{version_no}"
     if source_type == "deepseek_cleanup":
         return f"DeepSeek-v{version_no}"
+    if source_type == "google_vision":
+        return f"Vision-v{version_no}"
     return f"{source_type}-v{version_no}"
 
 
@@ -211,12 +213,13 @@ def upsert_record(
 
 
 def select_extractions(source_types: list[str] | None, limit: int) -> list[tuple[Any, ...]]:
-    type_filter = "e.source_type IN ('local_llm_ocr', 'deepseek_cleanup')"
-    params: list[Any] = []
     if source_types:
         placeholders = ", ".join(["%s"] * len(source_types))
         type_filter = f"e.source_type IN ({placeholders})"
-        params = list(source_types)
+        params: list[Any] = list(source_types)
+    else:
+        type_filter = "e.source_type IN ('local_llm_ocr', 'deepseek_cleanup', 'google_vision')"
+        params = []
     sql = f"""
         SELECT
             e.id, e.document_id, e.version_no, e.source_type, e.priority_score,
