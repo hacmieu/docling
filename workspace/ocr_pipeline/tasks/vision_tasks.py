@@ -43,9 +43,22 @@ def vision_api_config(config: PipelineConfig | None = None) -> dict[str, str]:
 def _image_bytes_for_path(path: Path) -> tuple[bytes, str]:
     suffix = path.suffix.lower()
     if suffix in {".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff"}:
-        data = path.read_bytes()
-        mime = "image/png" if suffix == ".png" else "image/jpeg"
-        return data, mime
+        from PIL import Image
+
+        with Image.open(path) as image:
+            image = image.convert("RGB")
+            max_edge = int(os.environ.get("PIPELINE_VISION_MAX_EDGE", "2048"))
+            width, height = image.size
+            if max(width, height) > max_edge:
+                scale = max_edge / max(width, height)
+                image = image.resize(
+                    (int(width * scale), int(height * scale)),
+                    Image.Resampling.LANCZOS,
+                )
+            mime = "image/png" if suffix == ".png" else "image/jpeg"
+            buffer = io.BytesIO()
+            image.save(buffer, format="PNG" if mime == "image/png" else "JPEG", quality=85)
+            return buffer.getvalue(), mime
     if suffix == ".pdf":
         import pypdfium2 as pdfium
 
@@ -83,20 +96,30 @@ def call_vision_ocr(
         "generationConfig": {"temperature": 0.0},
     }
     headers = {"Content-Type": "application/json"}
+    timeout_s = int(os.environ.get("PIPELINE_VISION_TIMEOUT_SECONDS", "300"))
     rate_limit = os.environ.get("CELERY_VISION_RATE_LIMIT", "10/m")
     _ = rate_limit
     for attempt in range(8):
-        response = requests.post(endpoint, headers=headers, json=payload, timeout=180)
-        if response.status_code == 429:
+        try:
+            response = requests.post(
+                endpoint, headers=headers, json=payload, timeout=timeout_s
+            )
+        except requests.Timeout as exc:
+            if attempt < 7:
+                time.sleep(min(120, 20 * (2**attempt)))
+                continue
+            raise RuntimeError(f"Vision API timed out after {timeout_s}s") from exc
+        if response.status_code in {429, 503}:
             wait_s = min(120, 15 * (2**attempt))
-            try:
-                err = response.json().get("error", {})
-                msg = str(err.get("message", ""))
-                match = re.search(r"retry in ([0-9.]+)s", msg, re.I)
-                if match:
-                    wait_s = max(wait_s, int(float(match.group(1))) + 2)
-            except (ValueError, TypeError, json.JSONDecodeError):
-                pass
+            if response.status_code == 429:
+                try:
+                    err = response.json().get("error", {})
+                    msg = str(err.get("message", ""))
+                    match = re.search(r"retry in ([0-9.]+)s", msg, re.I)
+                    if match:
+                        wait_s = max(wait_s, int(float(match.group(1))) + 2)
+                except (ValueError, TypeError, json.JSONDecodeError):
+                    pass
             time.sleep(wait_s)
             continue
         response.raise_for_status()
@@ -237,7 +260,7 @@ def vision_ocr_document(self, document_id: int) -> dict[str, Any]:
             "finished_at": datetime.now(UTC).isoformat(),
         }
     except requests.HTTPError as exc:
-        if exc.response is not None and exc.response.status_code == 429:
+        if exc.response is not None and exc.response.status_code in {429, 503}:
             raise self.retry(exc=exc) from exc
         return {"ok": False, "document_id": document_id, "error": str(exc)}
     except Exception as exc:

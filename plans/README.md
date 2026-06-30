@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260630_1747-teable-erd-standardization-plan.md](./20260630_1747-teable-erd-standardization-plan.md): Chuẩn ERD OwnCloud/DocExtractions; validate script; xóa orphan link.
 - [20260630_1605-vision-resume-plan.md](./20260630_1605-vision-resume-plan.md): Kế hoạch resume vision 21 JPG với nhịp tuần tự để tránh quota.
 - [20260630_1115-asr-vision-sequential-plan.md](./20260630_1115-asr-vision-sequential-plan.md): ASR xong; vision JPG chờ quota; resume PDF batch sau.
 - [20260630_1040-multi-format-ingest-plan.md](./20260630_1040-multi-format-ingest-plan.md): Plan thực thi ingest docx/jpg + enrich; m4a ASR pending.

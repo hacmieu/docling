@@ -27,6 +27,28 @@ REDUNDANT_OWN_CLOUD_FIELDS: tuple[str, ...] = (
     "ai_review",
 )
 
+# OwnCloud table in Teable ERD: document header + link to DocExtractions only.
+CANONICAL_OWN_CLOUD_FIELD_NAMES: frozenset[str] = frozenset(
+    {
+        "Label",
+        "Number",
+        "Status",
+        "owncloud_path",
+        "file_name",
+        "phong_ban",
+        "catalog_status",
+        "markdown_preview",
+        "ocr_duration_s",
+        "ocr_started_at",
+        "ocr_finished_at",
+        "updated_at",
+        "active_priority",
+        "active_source",
+        "extraction_version_count",
+        "DocExtractions",
+    }
+)
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ENV_FILE = REPO_ROOT / ".env"
 MARKDOWN_PREVIEW_LEN = 2000
