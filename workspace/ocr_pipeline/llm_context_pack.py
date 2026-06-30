@@ -222,6 +222,49 @@ def build_llm_context_pack(
     }
 
 
+DEGREE_DOC_TYPES = [
+    "bang-tot-nghiep",
+    "ban-sao-bang-cap",
+    "chung-chi-hanh-nghe",
+    "chung-chi-dao-tao",
+    "chung-chi-dao-tao-lien-tuc",
+    "chung-chi-ao-tao-lien-tuc",
+    "chung-chi",
+]
+
+
+def search_context_pack(
+    mode: str,
+    query: str,
+    *,
+    phong_ban: str | None = None,
+    limit: int = 50,
+    all_catalog: bool = False,
+) -> dict[str, Any]:
+    """Build LLM context pack for staff, degrees, or concept text search."""
+    if mode == "staff":
+        docs = search_staff_documents(query, phong_ban=phong_ban, limit=limit)
+        return build_llm_context_pack(
+            f"Tất cả thông tin của {query}",
+            docs,
+            filter_meta={"mode": mode, "name": query, "phong_ban": phong_ban},
+        )
+    if mode == "degrees":
+        path_filter = None if all_catalog else "BÁC SĨ"
+        docs = search_by_doc_types(
+            DEGREE_DOC_TYPES,
+            path_contains=path_filter,
+            phong_ban=phong_ban,
+            limit=limit,
+        )
+        return build_llm_context_pack(
+            "Bằng cấp và chứng chỉ bác sĩ",
+            docs,
+            filter_meta={"mode": mode, "phong_ban": phong_ban, "all_catalog": all_catalog},
+        )
+    raise ValueError(f"Unknown search mode: {mode}")
+
+
 def format_llm_prompt_block(query: str, documents: list[dict[str, Any]]) -> str:
     lines = [f"Câu hỏi: {query}", f"Số tài liệu: {len(documents)}", ""]
     for doc in documents:

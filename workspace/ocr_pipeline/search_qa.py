@@ -103,4 +103,59 @@ def answer_from_search_items(
         "reference_doc_ids": ref_ids,
         "model": cfg["model"],
         "excerpt_chars": len(excerpts),
+        "estimated_tokens": max(1, len(excerpts) // 4),
     }
+
+
+SYNTHESIZE_PROMPT = """Bạn là trợ lý nội bộ Bệnh viện Hưng Thịnh.
+
+Câu hỏi: {question}
+
+Dưới đây là metadata đã lọc từ catalog (doc_type, key_fields, summary). Chỉ trả lời dựa trên dữ liệu này.
+Nếu không đủ thông tin, nói rõ phần nào thiếu. Trả lời tiếng Việt, có bullet nếu cần.
+Cuối câu trả lời liệt kê doc_id tham chiếu.
+
+--- DỮ LIỆU ĐÃ LỌC ---
+{context}
+"""
+
+
+def synthesize_from_context_pack(
+    question: str,
+    context_block: str,
+    *,
+    doc_count: int = 0,
+) -> dict[str, Any]:
+    """DeepSeek synthesis over a pre-built llm_prompt_block."""
+    cfg = text_api_config()
+    prompt = SYNTHESIZE_PROMPT.format(question=question, context=context_block)
+    endpoint = f"{cfg['url']}/v1/chat/completions"
+    payload = {
+        "model": cfg["model"],
+        "messages": [
+            {
+                "role": "system",
+                "content": "Trả lời súc tích bằng tiếng Việt, chỉ dựa trên context được cung cấp.",
+            },
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.2,
+    }
+    headers = {"Authorization": f"Bearer {cfg['key']}", "Content-Type": "application/json"}
+    for attempt in range(5):
+        response = requests.post(endpoint, headers=headers, json=payload, timeout=120)
+        if response.status_code == 429:
+            time.sleep(min(60, 5 * (2**attempt)))
+            continue
+        response.raise_for_status()
+        answer = str(response.json()["choices"][0]["message"]["content"]).strip()
+        input_chars = len(prompt)
+        return {
+            "question": question,
+            "answer": answer,
+            "model": cfg["model"],
+            "input_chars": input_chars,
+            "estimated_tokens_input": max(1, input_chars // 4),
+            "doc_count": doc_count,
+        }
+    raise RuntimeError("AI API rate limited")

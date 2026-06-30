@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tìm kiếm metadata — HTH Catalog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        font-family: "Be Vietnam Pro", system-ui, sans-serif;
+        --bg: #0f172a;
+        --panel: #1e293b;
+        --panel2: #334155;
+        --border: #475569;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --accent: #38bdf8;
+        --accent-dim: #0c4a6e;
+        --ok: #4ade80;
+        --warn: #fbbf24;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        color: var(--text);
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 100vh;
+      }
+      header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      h1 { margin: 0; font-size: 18px; font-weight: 600; }
+      .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+      header a { color: var(--accent); text-decoration: none; font-size: 13px; }
+      header a:hover { text-decoration: underline; }
+      .search-bar {
+        display: grid;
+        grid-template-columns: 140px 1fr 160px auto auto;
+        gap: 10px;
+        padding: 16px 20px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+      }
+      @media (max-width: 900px) {
+        .search-bar { grid-template-columns: 1fr 1fr; }
+      }
+      input, select, textarea, button {
+        font: inherit;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--panel2);
+        color: var(--text);
+        padding: 10px 12px;
+      }
+      input:focus, select:focus, textarea:focus {
+        outline: 2px solid var(--accent);
+        outline-offset: 0;
+      }
+      button {
+        cursor: pointer;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      button.primary { background: var(--accent); color: #0f172a; border-color: var(--accent); }
+      button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+      button.ghost { background: transparent; }
+      .stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 12px 20px;
+        font-size: 13px;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+      }
+      .stat strong { color: var(--text); }
+      .token-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--accent-dim);
+        color: var(--accent);
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 0;
+        min-height: calc(100vh - 200px);
+      }
+      @media (max-width: 1000px) {
+        .layout { grid-template-columns: 1fr; }
+      }
+      .results {
+        overflow: auto;
+        padding: 0;
+      }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th {
+        text-align: left;
+        padding: 10px 14px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #33415580;
+        vertical-align: top;
+      }
+      tr:hover td { background: #33415540; }
+      .doc-type {
+        font-size: 11px;
+        background: #334155;
+        padding: 2px 8px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+      .kf { font-size: 12px; color: var(--muted); max-width: 280px; word-break: break-word; }
+      .summary { font-size: 12px; max-width: 320px; }
+      .aside {
+        border-left: 1px solid var(--border);
+        padding: 16px;
+        background: var(--panel);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .aside h2 { margin: 0; font-size: 15px; }
+      textarea { min-height: 80px; resize: vertical; width: 100%; }
+      .answer-box {
+        background: #0f172a;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px;
+        font-size: 13px;
+        white-space: pre-wrap;
+        max-height: 360px;
+        overflow: auto;
+        flex: 1;
+      }
+      .answer-box.empty { color: var(--muted); font-style: italic; }
+      .loading { color: var(--warn); font-size: 13px; }
+      .error { color: #f87171; font-size: 13px; }
+      .model-tag { font-size: 11px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Tìm kiếm metadata + DeepSeek</h1>
+        <div class="sub">Lọc theo nhân sự / bằng cấp → xem tokens → tổng hợp bằng AI</div>
+      </div>
+      <a href="/">← Catalog đầy đủ</a>
+    </header>
+
+    <div class="search-bar">
+      <select id="mode">
+        <option value="staff">Nhân sự (tên)</option>
+        <option value="degrees">Bằng / chứng chỉ BS</option>
+      </select>
+      <input id="query" placeholder="VD: Trần Đức Hiển" value="Trần Đức Hiển" />
+      <input id="phongBan" placeholder="Phòng ban (tuỳ chọn)" />
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+        <input type="checkbox" id="allCatalog" />
+        Toàn catalog
+      </label>
+      <button class="primary" id="searchBtn">Tìm kiếm</button>
+    </div>
+
+    <div class="stats" id="stats">
+      <span>Chưa tìm kiếm</span>
+    </div>
+
+    <div class="layout">
+      <section class="results">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Loại</th>
+              <th>Key fields</th>
+              <th>Tóm tắt</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr><td colspan="4" style="padding:24px;color:var(--muted)">Nhập tên hoặc chọn chế độ bằng cấp rồi bấm Tìm kiếm.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <aside class="aside">
+        <h2>DeepSeek tổng hợp</h2>
+        <label style="font-size:12px;color:var(--muted)">Câu hỏi gửi LLM</label>
+        <textarea id="question" placeholder="VD: Tóm tắt hồ sơ và liệt kê chứng chỉ còn hiệu lực">Tóm tắt toàn bộ hồ sơ và các giấy tờ quan trọng</textarea>
+        <button class="primary" id="synthBtn" disabled>Gửi DeepSeek tổng hợp</button>
+        <div id="synthStatus"></div>
+        <div class="answer-box empty" id="answer">Kết quả trả lời sẽ hiển thị ở đây.</div>
+        <div class="model-tag" id="modelTag"></div>
+      </aside>
+    </div>
+
+    <script>
+      const modeEl = document.getElementById("mode");
+      const queryEl = document.getElementById("query");
+      const phongEl = document.getElementById("phongBan");
+      const allCatEl = document.getElementById("allCatalog");
+      const searchBtn = document.getElementById("searchBtn");
+      const statsEl = document.getElementById("stats");
+      const rowsEl = document.getElementById("rows");
+      const questionEl = document.getElementById("question");
+      const synthBtn = document.getElementById("synthBtn");
+      const synthStatus = document.getElementById("synthStatus");
+      const answerEl = document.getElementById("answer");
+      const modelTag = document.getElementById("modelTag");
+
+      let currentPack = null;
+
+      function esc(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
+      }
+
+      function kfPreview(kf) {
+        if (!kf || !Object.keys(kf).length) return "—";
+        const parts = [];
+        for (const [k, v] of Object.entries(kf)) {
+          if (v) parts.push(`${k}: ${v}`);
+        }
+        return esc(parts.slice(0, 5).join(" · ")) + (parts.length > 5 ? "…" : "");
+      }
+
+      modeEl.onchange = () => {
+        const isDeg = modeEl.value === "degrees";
+        queryEl.placeholder = isDeg ? "(không bắt buộc)" : "VD: Trần Đức Hiển";
+        queryEl.disabled = isDeg;
+        if (isDeg) queryEl.value = "";
+        allCatEl.parentElement.style.display = isDeg ? "flex" : "none";
+      };
+
+      async function runSearch() {
+        searchBtn.disabled = true;
+        statsEl.innerHTML = '<span class="loading">Đang tìm…</span>';
+        rowsEl.innerHTML = "";
+        currentPack = null;
+        synthBtn.disabled = true;
+        answerEl.textContent = "Kết quả trả lời sẽ hiển thị ở đây.";
+        answerEl.classList.add("empty");
+        modelTag.textContent = "";
+
+        const params = new URLSearchParams();
+        params.set("mode", modeEl.value);
+        if (queryEl.value.trim()) params.set("q", queryEl.value.trim());
+        if (phongEl.value.trim()) params.set("phong_ban", phongEl.value.trim());
+        if (allCatEl.checked) params.set("all_catalog", "1");
+        params.set("limit", "100");
+
+        try {
+          const res = await fetch(`/api/search/context?${params}`);
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error || "Lỗi tìm kiếm");
+          currentPack = data;
+          renderResults(data);
+        } catch (err) {
+          statsEl.innerHTML = `<span class="error">${esc(err.message)}</span>`;
+          rowsEl.innerHTML = `<tr><td colspan="4" class="error">${esc(err.message)}</td></tr>`;
+        } finally {
+          searchBtn.disabled = false;
+        }
+      }
+
+      function renderResults(data) {
+        const docs = data.documents || [];
+        statsEl.innerHTML = `
+          <span><strong>${docs.length}</strong> tài liệu</span>
+          <span class="token-badge">~${data.estimated_tokens_prompt || 0} tokens (prompt)</span>
+          <span class="token-badge">~${data.estimated_tokens_json || 0} tokens (JSON)</span>
+          <span>${data.prompt_chars || 0} ký tự context</span>
+        `;
+        if (docs.length === 0) {
+          rowsEl.innerHTML = `<tr><td colspan="4" style="color:var(--muted)">Không có kết quả.</td></tr>`;
+          return;
+        }
+        synthBtn.disabled = false;
+        rowsEl.innerHTML = docs.map((d) => `
+          <tr>
+            <td>${d.doc_id}</td>
+            <td><span class="doc-type">${esc(d.doc_type || "—")}</span></td>
+            <td class="kf">${kfPreview(d.key_fields)}</td>
+            <td class="summary">${esc((d.summary || "").slice(0, 200))}${(d.summary || "").length > 200 ? "…" : ""}</td>
+          </tr>
+        `).join("");
+      }
+
+      async function runSynthesize() {
+        if (!currentPack || !currentPack.llm_prompt_block) return;
+        const question = questionEl.value.trim();
+        if (!question) {
+          synthStatus.innerHTML = '<span class="error">Nhập câu hỏi.</span>';
+          return;
+        }
+        synthBtn.disabled = true;
+        synthStatus.innerHTML = '<span class="loading">DeepSeek đang tổng hợp… (~' + (currentPack.estimated_tokens_prompt || 0) + ' tokens input)</span>';
+        answerEl.textContent = "";
+        answerEl.classList.remove("empty");
+
+        try {
+          const res = await fetch("/api/search/synthesize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              question,
+              llm_prompt_block: currentPack.llm_prompt_block,
+              doc_count: currentPack.doc_count,
+            }),
+          });
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error || "Lỗi AI");
+          answerEl.textContent = data.answer;
+          modelTag.textContent = `${data.model || "deepseek"} · input ~${data.estimated_tokens_input || "?"} tokens`;
+          synthStatus.innerHTML = "";
+        } catch (err) {
+          synthStatus.innerHTML = `<span class="error">${esc(err.message)}</span>`;
+          answerEl.textContent = "Lỗi khi gọi DeepSeek.";
+          answerEl.classList.add("empty");
+        } finally {
+          synthBtn.disabled = !currentPack;
+        }
+      }
+
+      searchBtn.onclick = runSearch;
+      synthBtn.onclick = runSynthesize;
+      queryEl.onkeydown = (e) => { if (e.key === "Enter") runSearch(); };
+    </script>
+  </body>
+</html>

@@ -27,7 +27,8 @@ from workspace.ocr_pipeline.concept_search import (
     snippet_around,
 )
 from workspace.ocr_pipeline.db_postgres import connect, database_url, load_dotenv
-from workspace.ocr_pipeline.search_qa import answer_from_search_items
+from workspace.ocr_pipeline.llm_context_pack import search_context_pack
+from workspace.ocr_pipeline.search_qa import answer_from_search_items, synthesize_from_context_pack
 from workspace.ocr_pipeline.teable_catalog import DRIVE_PREFIX_DEFAULT, display_path
 
 
@@ -290,6 +291,32 @@ class PgCatalogDb:
         qa = answer_from_search_items(query, search["items"])
         return {**search, **qa}
 
+    def search_context(
+        self,
+        mode: str,
+        query: str,
+        *,
+        phong_ban: str | None,
+        limit: int,
+        all_catalog: bool,
+    ) -> dict[str, Any]:
+        pack = search_context_pack(
+            mode,
+            query,
+            phong_ban=phong_ban,
+            limit=limit,
+            all_catalog=all_catalog,
+        )
+        return pack
+
+    def synthesize_context(
+        self,
+        question: str,
+        context_block: str,
+        doc_count: int,
+    ) -> dict[str, Any]:
+        return synthesize_from_context_pack(question, context_block, doc_count=doc_count)
+
 
 def is_port_available(host: str, port: int) -> bool:
     with socket() as sock:
@@ -322,6 +349,10 @@ def build_handler(db: PgCatalogDb, static_dir: Path):
 
             if parsed.path in ("/", "/index.html"):
                 self._send_file(static_dir / "catalog.html", "text/html; charset=utf-8")
+                return
+
+            if parsed.path in ("/search", "/search.html"):
+                self._send_file(static_dir / "search.html", "text/html; charset=utf-8")
                 return
 
             if parsed.path == "/api/health":
@@ -360,6 +391,30 @@ def build_handler(db: PgCatalogDb, static_dir: Path):
                     self._send_json({"ok": False, "error": str(exc)}, 502)
                     return
                 self._send_json({"ok": True, **result})
+                return
+
+            if parsed.path == "/api/search/context":
+                qs = parse_qs(parsed.query)
+                mode = (qs.get("mode", ["staff"])[0] or "staff").strip()
+                q = (qs.get("q", [""])[0] or "").strip()
+                if mode == "staff" and not q:
+                    self._send_json({"ok": False, "error": "q required for staff mode"}, 400)
+                    return
+                limit = max(1, min(int(qs.get("limit", ["50"])[0]), 200))
+                phong_ban = qs.get("phong_ban", [None])[0]
+                all_catalog = qs.get("all_catalog", ["0"])[0] in ("1", "true", "yes")
+                try:
+                    pack = db.search_context(
+                        mode,
+                        q,
+                        phong_ban=phong_ban,
+                        limit=limit,
+                        all_catalog=all_catalog,
+                    )
+                except ValueError as exc:
+                    self._send_json({"ok": False, "error": str(exc)}, 400)
+                    return
+                self._send_json({"ok": True, **pack})
                 return
 
             if parsed.path == "/api/documents":
@@ -407,6 +462,34 @@ def build_handler(db: PgCatalogDb, static_dir: Path):
                 return
 
             self._send_json({"ok": False, "error": "not found"}, 404)
+
+        def do_POST(self) -> None:  # noqa: N802
+            parsed = urlparse(self.path)
+            if parsed.path != "/api/search/synthesize":
+                self._send_json({"ok": False, "error": "not found"}, 404)
+                return
+            length = int(self.headers.get("Content-Length", "0"))
+            raw = self.rfile.read(length) if length > 0 else b"{}"
+            try:
+                body = json.loads(raw.decode("utf-8"))
+            except json.JSONDecodeError:
+                self._send_json({"ok": False, "error": "invalid JSON body"}, 400)
+                return
+            question = str(body.get("question", "")).strip()
+            context_block = str(body.get("llm_prompt_block", "")).strip()
+            doc_count = int(body.get("doc_count", 0))
+            if not question:
+                self._send_json({"ok": False, "error": "question required"}, 400)
+                return
+            if not context_block:
+                self._send_json({"ok": False, "error": "llm_prompt_block required"}, 400)
+                return
+            try:
+                result = db.synthesize_context(question, context_block, doc_count)
+            except Exception as exc:
+                self._send_json({"ok": False, "error": str(exc)}, 502)
+                return
+            self._send_json({"ok": True, **result})
 
         def log_message(self, format: str, *args: Any) -> None:  # noqa: A003
             return

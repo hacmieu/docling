@@ -28,6 +28,7 @@
 !webapp/static/
 !webapp/static/index.html
 !webapp/static/catalog.html
+!webapp/static/search.html
 !ocr_schema.py
 !db_postgres.py
 !teable_catalog.py

@@ -14,20 +14,13 @@ if str(REPO_ROOT) not in sys.path:
 
 from workspace.ocr_pipeline.db_postgres import load_dotenv
 from workspace.ocr_pipeline.llm_context_pack import (
+    DEGREE_DOC_TYPES,
     build_llm_context_pack,
     search_by_doc_types,
     search_staff_documents,
 )
 
-DEGREE_DOC_TYPES = [
-    "bang-tot-nghiep",
-    "chung-chi-hanh-nghe",
-    "chung-chi-dao-tao",
-    "chung-chi-dao-tao-lien-tuc",
-    "chung-chi-ao-tao-lien-tuc",
-    "chung-chi",
-    "ban-sao-bang-cap",
-]
+DEGREE_DOC_TYPES = list(DEGREE_DOC_TYPES)  # re-export for CLI
 
 
 def main() -> int:
