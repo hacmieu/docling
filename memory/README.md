@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260630_1005-multi-format-markdown-strategy.md](./20260630_1005-multi-format-markdown-strategy.md): Word/Excel/ảnh → markdown; ingest_formats + VAR PIPELINE_INGEST_*.
 - [20260630_0915-dual-lane-pipeline-config.md](./20260630_0915-dual-lane-pipeline-config.md): Hai lane RAW/Vision, mỗi lane enrich riêng; VAR `PIPELINE_*`.
 - [20260630_0901-vision-ai-metadata-inherit.md](./20260630_0901-vision-ai-metadata-inherit.md): Kế thừa ai_* từ documents sang google_vision; backfill 19 row Teable.
 - [20260630_0851-vision-incremental-teable.md](./20260630_0851-vision-incremental-teable.md): Sync Teable ngay sau mỗi vision OCR; backfill 18 doc.

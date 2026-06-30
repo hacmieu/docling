@@ -36,6 +36,7 @@
 !concept_search.py
 !pipeline_config.py
 !ai_enrich.py
+!ingest_formats.py
 !teable_incremental_sync.py
 !extraction_store.py
 !search_qa.py

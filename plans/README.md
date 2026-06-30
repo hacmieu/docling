@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260630_1005-multi-format-ingest-plan.md](./20260630_1005-multi-format-ingest-plan.md): Routing docx/xlsx/ảnh → markdown; mở rộng ocr_catalog_postgres.
 - [20260630_0915-dual-lane-pipeline-config-plan.md](./20260630_0915-dual-lane-pipeline-config-plan.md): Thiết kế 2 lane + enrich + toàn bộ VAR trong pipeline_config.
 - [20260630_0901-vision-ai-metadata-plan.md](./20260630_0901-vision-ai-metadata-plan.md): Kế thừa metadata enrich sang Vision extraction cho Teable ai_*.
 - [20260630_0851-vision-incremental-teable-plan.md](./20260630_0851-vision-incremental-teable-plan.md): Teable sync từng doc sau vision OCR; backfill + batch mới.
