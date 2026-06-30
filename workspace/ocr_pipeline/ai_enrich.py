@@ -14,6 +14,7 @@ from workspace.ocr_pipeline.metadata_normalize import (
     normalize_doc_type,
     normalize_tags,
 )
+from workspace.ocr_pipeline.metadata_schema import field_list_text, schema_for_doc_type
 from workspace.ocr_pipeline.pipeline_config import (
     PipelineConfig,
     load_pipeline_config,
@@ -29,10 +30,30 @@ Phân tích markdown OCR và trả về ĐÚNG một JSON object (không bọc `
   "doc_type": "string",
   "category": "string",
   "tags": ["tag1", "tag2"],
-  "key_fields": {{"ten": "...", "so": "...", "ngay": "...", "don_vi": "..."}},
+  "key_fields": {{}},
   "ocr_quality": "tot|kha|yeu",
   "review_vi": "đoạn tóm tắt ngắn bằng tiếng Việt"
 }}
+
+doc_type dùng slug tiếng Việt không dấu, ví dụ: can-cuoc-cong-dan, giay-khai-sinh,
+bang-tot-nghiep, chung-chi-hanh-nghe, chung-chi-dao-tao, hop-dong-lao-dong, quyet-dinh.
+
+Tên file: {filename}
+
+--- OCR MARKDOWN ---
+{markdown}
+"""
+
+EXTRACT_PROMPT = """Bạn trích xuất metadata có cấu trúc từ văn bản OCR tiếng Việt.
+
+Loại giấy (doc_type): {doc_type}
+Trường bắt buộc: {required_fields}
+Trường tuỳ chọn: {optional_fields}
+
+Trả ĐÚNG một JSON object (không bọc ```):
+{{"key_fields": {{"ten": "...", ...}}}}
+
+Dùng chuỗi rỗng "" nếu không tìm thấy. Ngày: DD/MM/YYYY hoặc YYYY-MM-DD.
 
 Tên file: {filename}
 
@@ -79,17 +100,18 @@ def _parse_json_content(content: str) -> dict[str, object]:
     return json.loads(text)
 
 
-def call_aibox_enrich(
-    ocr_text: str,
-    filename: str,
-    api_cfg: dict[str, str],
-    *,
-    max_chars: int = 12000,
+def _merge_key_fields(
+    base: dict[str, object] | None,
+    extra: dict[str, object] | None,
 ) -> dict[str, object]:
-    prompt = ENRICH_PROMPT.format(
-        filename=filename,
-        markdown=ocr_text[:max_chars],
-    )
+    merged: dict[str, object] = dict(base or {})
+    for key, value in (extra or {}).items():
+        if value is not None and str(value).strip():
+            merged[key] = value
+    return merged
+
+
+def call_aibox_with_prompt(prompt: str, api_cfg: dict[str, str]) -> dict[str, object]:
     endpoint = f"{api_cfg['url']}/v1/chat/completions"
     payload = {
         "model": api_cfg["model"],
@@ -112,17 +134,7 @@ def call_aibox_enrich(
     raise RuntimeError("AI enrich API rate limited")
 
 
-def call_google_enrich(
-    ocr_text: str,
-    filename: str,
-    api_cfg: dict[str, str],
-    *,
-    max_chars: int = 12000,
-) -> dict[str, object]:
-    prompt = ENRICH_PROMPT.format(
-        filename=filename,
-        markdown=ocr_text[:max_chars],
-    )
+def call_google_with_prompt(prompt: str, api_cfg: dict[str, str]) -> dict[str, object]:
     endpoint = f"{api_cfg['url']}/models/{api_cfg['model']}:generateContent?key={api_cfg['key']}"
     payload = {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
@@ -164,6 +176,46 @@ def call_google_enrich(
     raise RuntimeError("Google enrich API rate limited")
 
 
+def call_ai_with_prompt(prompt: str, api_cfg: dict[str, str]) -> dict[str, object]:
+    if api_cfg.get("provider") == "google":
+        return call_google_with_prompt(prompt, api_cfg)
+    return call_aibox_with_prompt(prompt, api_cfg)
+
+
+def enrich_document_metadata(
+    ocr_text: str,
+    filename: str,
+    api_cfg: dict[str, str],
+    *,
+    max_chars: int = 12000,
+) -> dict[str, object]:
+    """Classify doc_type then extract key_fields per metadata_schemas_vi.json."""
+    markdown = ocr_text[:max_chars]
+    classify_prompt = ENRICH_PROMPT.format(filename=filename, markdown=markdown)
+    classified = call_ai_with_prompt(classify_prompt, api_cfg)
+
+    type_slug, type_label = normalize_doc_type(str(classified.get("doc_type", "")))
+    doc_type_display = type_label or str(classified.get("doc_type", ""))
+    schema = schema_for_doc_type(type_slug or str(classified.get("doc_type", "")))
+
+    extract_prompt = EXTRACT_PROMPT.format(
+        doc_type=doc_type_display,
+        required_fields=field_list_text(schema["required"]),
+        optional_fields=field_list_text(schema["optional"]),
+        filename=filename,
+        markdown=markdown,
+    )
+    extracted = call_ai_with_prompt(extract_prompt, api_cfg)
+
+    classified["key_fields"] = _merge_key_fields(
+        classified.get("key_fields") if isinstance(classified.get("key_fields"), dict) else {},
+        extracted.get("key_fields") if isinstance(extracted.get("key_fields"), dict) else {},
+    )
+    if type_slug:
+        classified["doc_type"] = type_slug
+    return classified
+
+
 def call_ai_enrich(
     ocr_text: str,
     filename: str,
@@ -171,9 +223,7 @@ def call_ai_enrich(
     *,
     max_chars: int = 12000,
 ) -> dict[str, object]:
-    if api_cfg.get("provider") == "google":
-        return call_google_enrich(ocr_text, filename, api_cfg, max_chars=max_chars)
-    return call_aibox_enrich(ocr_text, filename, api_cfg, max_chars=max_chars)
+    return enrich_document_metadata(ocr_text, filename, api_cfg, max_chars=max_chars)
 
 
 def apply_enrichment_to_extraction(
@@ -222,6 +272,6 @@ def enrich_extraction_from_ocr_text(
     """Run text enrich on OCR output and persist ai_* fields on the extraction row."""
     cfg = config or load_pipeline_config()
     api_cfg = enrich_api_config(lane, cfg)
-    data = call_ai_enrich(ocr_text, filename, api_cfg, max_chars=cfg.enrich_max_chars)
+    data = enrich_document_metadata(ocr_text, filename, api_cfg, max_chars=cfg.enrich_max_chars)
     apply_enrichment_to_extraction(conn, extraction_id, data, api_cfg["model"])
     return data

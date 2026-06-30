@@ -31,8 +31,8 @@ def main() -> int:
     parser.add_argument(
         "--sleep-seconds",
         type=float,
-        default=30.0,
-        help="Pause between enrich calls (Google free-tier pacing).",
+        default=4.0,
+        help="Pause between enrich calls (use 30+ for Google enrich quota).",
     )
     args = parser.parse_args()
 

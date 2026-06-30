@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260630_1925-metadata-rollout-execution.md](./20260630_1925-metadata-rollout-execution.md): Execution rollout schema metadata + vision backfill 40 row.
 - [20260630_1917-gemini-ocr-deepseek-enrich-plan.md](./20260630_1917-gemini-ocr-deepseek-enrich-plan.md): Chiến lược Gemini OCR + DSv4 enrich mọi lane; backfill; filter trước Q&A.
 - [20260630_1914-two-pass-ai-metadata-extraction-plan.md](./20260630_1914-two-pass-ai-metadata-extraction-plan.md): 2 lượt AI; schema theo doc_type; tùy chọn Gemini single-pass.
 - [20260630_1910-per-doctype-metadata-schema-plan.md](./20260630_1910-per-doctype-metadata-schema-plan.md): Schema metadata theo doc_type; metadata_schemas_vi.json; view hết hạn.

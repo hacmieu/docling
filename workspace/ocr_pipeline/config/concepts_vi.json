@@ -23,5 +23,11 @@
     "synonyms": ["quyết định", "qđ", "ban hành"],
     "tags": ["quyet-dinh", "bo-nhiem", "mien-nhiem"],
     "categories": ["Quyết định", "Nhân sự"]
+  },
+  "chung-chi-con-han": {
+    "label": "Chứng chỉ còn hạn",
+    "synonyms": ["chứng chỉ còn hạn", "còn hiệu lực", "chưa hết hạn", "valid certificate"],
+    "tags": ["chung-chi", "chung-chi-hanh-nghe", "pham-vi-hanh-nghe"],
+    "categories": ["Nhân sự"]
   }
 }

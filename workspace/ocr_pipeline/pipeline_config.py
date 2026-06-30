@@ -58,14 +58,15 @@ class PipelineConfig:
 def load_pipeline_config() -> PipelineConfig:
     load_dotenv(ENV_FILE)
     raw_enrich_model = _env("PIPELINE_RAW_ENRICH_MODEL") or _env("AI_BOX_MODEL", "deepseek-v4-pro")
-    vision_enrich_model = (
-        _env("PIPELINE_VISION_ENRICH_MODEL")
-        or (_env("GOOGLE_VISION_MODEL", "gemini-2.5-flash") if _env("PIPELINE_VISION_PROVIDER", "google") == "google" else "")
-        or raw_enrich_model
-    )
     vision_enrich_provider = _env("PIPELINE_VISION_ENRICH_PROVIDER") or (
         "google" if _env("PIPELINE_VISION_PROVIDER", "google") == "google" else "aibox"
     )
+    vision_enrich_model = _env("PIPELINE_VISION_ENRICH_MODEL")
+    if not vision_enrich_model:
+        if vision_enrich_provider == "google":
+            vision_enrich_model = _env("GOOGLE_VISION_MODEL", "gemini-2.5-flash")
+        else:
+            vision_enrich_model = raw_enrich_model
     vision_model = _env("PIPELINE_VISION_MODEL") or _env("GOOGLE_VISION_MODEL", "gemini-2.5-flash")
     priority_raw = _env("PIPELINE_PRIORITY_VISION", "70")
     return PipelineConfig(

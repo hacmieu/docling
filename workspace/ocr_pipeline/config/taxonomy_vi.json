@@ -61,6 +61,26 @@
     "bien-ban-giao-nhan": {
       "label": "Biên bản giao nhận",
       "aliases": ["biên bản giao nhận"]
+    },
+    "giay-khai-sinh": {
+      "label": "Giấy khai sinh",
+      "aliases": ["giấy khai sinh", "khai sinh", "trích lục khai sinh"]
+    },
+    "bang-tot-nghiep": {
+      "label": "Bằng tốt nghiệp",
+      "aliases": ["bằng tốt nghiệp", "bằng cấp", "bằng đại học", "bằng trung cấp"]
+    },
+    "chung-chi-hanh-nghe": {
+      "label": "Chứng chỉ hành nghề",
+      "aliases": ["chứng chỉ hành nghề", "CCHN", "giấy phép hành nghề", "phạm vi hành nghề"]
+    },
+    "chung-chi-dao-tao": {
+      "label": "Chứng chỉ đào tạo",
+      "aliases": ["chứng chỉ đào tạo", "chứng chỉ tập huấn", "chứng chỉ liên tục"]
+    },
+    "chung-chi": {
+      "label": "Chứng chỉ",
+      "aliases": ["chứng chỉ", "certificate"]
     }
   },
   "tag_aliases": {

@@ -1,0 +1,42 @@
+{
+  "default": {
+    "required": ["ten", "so", "ngay", "don_vi"],
+    "optional": ["ngay_het_han", "pham_vi", "noi_cap", "ghi_chu"]
+  },
+  "can-cuoc-cong-dan": {
+    "required": ["ten", "so_cccd", "ngay_sinh", "gioi_tinh", "que_quan", "thuong_tru"],
+    "optional": ["ngay_cap", "noi_cap", "dan_toc", "ton_giao"]
+  },
+  "giay-khai-sinh": {
+    "required": ["ho_ten", "ngay_sinh", "noi_sinh", "ho_ten_cha", "ho_ten_me", "so_dang_ky"],
+    "optional": ["noi_dang_ky", "quoc_tich", "dan_toc"]
+  },
+  "bang-tot-nghiep": {
+    "required": ["ten", "so", "ngay_cap_bang", "truong", "chuyen_nganh"],
+    "optional": ["xep_loai", "don_vi", "ngay_cap"]
+  },
+  "chung-chi-hanh-nghe": {
+    "required": ["ten", "so", "ngay_cap", "ngay_het_han", "pham_vi", "don_vi"],
+    "optional": ["noi_cap", "chuyen_mon"]
+  },
+  "chung-chi-dao-tao": {
+    "required": ["ten", "so", "ngay_cap", "don_vi", "noi_dung"],
+    "optional": ["ngay_het_han", "so_gio", "noi_cap"]
+  },
+  "chung-chi": {
+    "required": ["ten", "so", "ngay_cap", "don_vi"],
+    "optional": ["ngay_het_han", "pham_vi", "noi_cap"]
+  },
+  "ly-lich-tu-phap": {
+    "required": ["ten", "ngay_sinh", "noi_cu_tru", "so_phieu"],
+    "optional": ["ngay_cap", "co_quan_cap", "ket_luan"]
+  },
+  "hop-dong-lao-dong": {
+    "required": ["ten", "so", "ngay_ky", "don_vi", "chuc_vu"],
+    "optional": ["ngay_het_han", "loai_hop_dong", "muc_luong"]
+  },
+  "quyet-dinh": {
+    "required": ["so", "ngay", "don_vi", "trich_yeu"],
+    "optional": ["ten", "nguoi_ky", "noi_nhan"]
+  }
+}

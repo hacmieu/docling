@@ -33,6 +33,7 @@
 !teable_catalog.py
 !extraction_priority.py
 !metadata_normalize.py
+!metadata_schema.py
 !concept_search.py
 !pipeline_config.py
 !ai_enrich.py
@@ -48,6 +49,7 @@
 !config/
 !config/taxonomy_vi.json
 !config/concepts_vi.json
+!config/metadata_schemas_vi.json
 !requirements-pipeline.txt
 !infra/
 !infra/README.md
