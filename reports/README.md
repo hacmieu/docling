@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260630_2232-deep-search-llm-context-report.md](./20260630_2232-deep-search-llm-context-report.md): Tìm sâu metadata; Hiển 7 doc ~720 tokens; 66 bằng/chứng chỉ ~7k tokens.
 - [20260630_1925-metadata-rollout-report.md](./20260630_1925-metadata-rollout-report.md): Triển khai 2-step enrich, view certificate_status, pilot CCCD doc 831.
 - [20260630_1917-metadata-shrink-search-space-report.md](./20260630_1917-metadata-shrink-search-space-report.md): DSv4 Pro enrich text Gemini; metadata giảm không gian search.
 - [20260630_1914-two-pass-ai-metadata-report.md](./20260630_1914-two-pass-ai-metadata-report.md): Xác nhận cần AI ngữ cảnh; enrich đã có; Gemini gộp 1 lần là tối ưu tương lai.

@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260630_2232-deep-search-llm-context-playbook.md](./20260630_2232-deep-search-llm-context-playbook.md): export_llm_context.py; staff/degrees pack + token estimate.
 - [20260630_1925-gemini-deepseek-metadata-rollout.md](./20260630_1925-gemini-deepseek-metadata-rollout.md): Triển khai schema + 2-step enrich + backfill vision DSv4 Pro.
 - [20260630_1917-gemini-ocr-deepseek-enrich-playbook.md](./20260630_1917-gemini-ocr-deepseek-enrich-playbook.md): Gemini OCR + DSv4 Pro enrich; env aibox; thu hẹp search.
 - [20260630_1914-two-pass-ai-metadata-playbook.md](./20260630_1914-two-pass-ai-metadata-playbook.md): OCR + enrich (lượt 2) đã có; Gemini chưa single-pass.

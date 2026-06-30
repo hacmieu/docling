@@ -42,6 +42,7 @@
 !teable_incremental_sync.py
 !extraction_store.py
 !search_qa.py
+!llm_context_pack.py
 !celery_app.py
 !tasks/
 !tasks/__init__.py
