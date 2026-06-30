@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260630_1910-metadata-db-ingestion-playbook.md](./20260630_1910-metadata-db-ingestion-playbook.md): Luồng OCR→enrich→key_fields JSONB; không nhập tay từng file.
 - [20260630_1805-staff-search-playbook.md](./20260630_1805-staff-search-playbook.md): Playbook tìm bác sĩ (path/API/Teable); chứng chỉ hết hạn — gap ngay_het_han.
 - [20260630_1747-dev-vision-teable-erd-completion.md](./20260630_1747-dev-vision-teable-erd-completion.md): Vision 21/21 JPG; Teable ERD audit; orphan _link_child_test.
 - [20260630_1605-status-checkpoint.md](./20260630_1605-status-checkpoint.md): Snapshot 498 success; vision 21 JPG còn pending do quota 429.
