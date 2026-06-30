@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260630_0901-vision-ai-metadata-inherit.md](./20260630_0901-vision-ai-metadata-inherit.md): Kế thừa ai_* từ documents sang google_vision; backfill 19 row Teable.
 - [20260630_0851-vision-incremental-teable.md](./20260630_0851-vision-incremental-teable.md): Sync Teable ngay sau mỗi vision OCR; backfill 18 doc.
 - [20260630_0810-vision-parallel-launch.md](./20260630_0810-vision-parallel-launch.md): Khởi động vision batch 444 doc song song Teable loop; pilot 506–507 OK.
 - [20260630_0638-project-status-summary.md](./20260630_0638-project-status-summary.md): Snapshot 498 doc, enrich xong, vision pilot 3, Teable loop chạy.

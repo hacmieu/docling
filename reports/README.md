@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260630_0901-vision-ai-metadata-report.md](./20260630_0901-vision-ai-metadata-report.md): Giải thích + fix cột ai_* trống trên Vision Teable.
 - [20260630_0851-vision-incremental-teable-report.md](./20260630_0851-vision-incremental-teable-report.md): Triển khai push Teable ngay sau mỗi vision OCR.
 - [20260630_0810-vision-parallel-rollout-report.md](./20260630_0810-vision-parallel-rollout-report.md): Đã kick vision batch 444 doc nền, song song Teable sync.
 - [20260630_0638-project-status-report.md](./20260630_0638-project-status-report.md): Snapshot tình trạng — enrich 487/498, vision 3/470, Teable loop OK.

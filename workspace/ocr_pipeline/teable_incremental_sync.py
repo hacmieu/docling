@@ -24,6 +24,7 @@ from scripts.sync_extractions_to_teable import (  # noqa: E402
     upsert_record,
 )
 from workspace.ocr_pipeline.db_postgres import connect, load_dotenv
+from workspace.ocr_pipeline.extraction_store import inherit_document_ai_metadata
 from workspace.ocr_pipeline.teable_catalog import teable_config, teable_headers
 
 MIGRATION_005 = (
@@ -161,6 +162,14 @@ def sync_extraction_and_document(
         return result
 
     try:
+        with connect() as conn:
+            inherited = inherit_document_ai_metadata(conn, document_id, extraction_id)
+            if inherited:
+                result["ai_metadata_inherited"] = True
+        row = _fetch_extraction_row(extraction_id)
+        if not row:
+            result["error"] = "extraction not found after inherit"
+            return result
         fields = build_fields(row, doc_record, ctx.allowed_choices)
         record_id = ctx.ext_map.get(extraction_id)
         teable_id = upsert_record(ctx.ext_cfg, fields, record_id, dry_run=False)

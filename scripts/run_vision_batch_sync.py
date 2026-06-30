@@ -122,9 +122,10 @@ def main() -> int:
                 else:
                     teable_ok += 1
                     action = "created" if sync_result.get("created") else "updated"
+                    inherited = " ai_inherited" if sync_result.get("ai_metadata_inherited") else ""
                     log_line(
                         log_file,
-                        f"[TEABLE-OK] doc_id={doc_id} extraction_{action} "
+                        f"[TEABLE-OK] doc_id={doc_id} extraction_{action}{inherited} "
                         f"owncloud_patched={sync_result.get('owncloud_patched')}",
                     )
         else:

@@ -16,6 +16,7 @@ import requests
 from workspace.ocr_pipeline.celery_app import app
 from workspace.ocr_pipeline.db_postgres import connect, load_dotenv
 from workspace.ocr_pipeline.extraction_priority import SOURCE_PRIORITY
+from workspace.ocr_pipeline.extraction_store import inherit_document_ai_metadata
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 ENV_FILE = REPO_ROOT / ".env"
@@ -131,7 +132,9 @@ def persist_vision_extraction(
                 json.dumps({"local_path": local_path, "page": 1}),
             ),
         ).fetchone()
-        return int(row[0])
+        extraction_id = int(row[0])
+        inherit_document_ai_metadata(conn, document_id, extraction_id)
+        return extraction_id
 
 
 @app.task(
