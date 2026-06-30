@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260630_0810-vision-parallel-rollout-plan.md](./20260630_0810-vision-parallel-rollout-plan.md): Rollout vision batch 444 doc ∥ Teable loop, sleep 12s, post-sync effective.
 - [20260629_1748-gemini-model-comparison-plan.md](./20260629_1748-gemini-model-comparison-plan.md): Probe 1.5-pro (fail), so sánh 4 lane extraction, giữ 2.5-flash.
 - [20260629_1552-teable-live-sync-plan.md](./20260629_1552-teable-live-sync-plan.md): Kế hoạch đẩy Teable liên tục bằng loop sync 5 phút.
 - [20260629_1545-google-vision-rollout-plan.md](./20260629_1545-google-vision-rollout-plan.md): Rollout Google Gemini vision (2.5 flash/pro) với nhịp chậm cho free-tier.
