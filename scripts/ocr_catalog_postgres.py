@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-"""Download cataloged files from OCIS, OCR with Docling, update PostgreSQL with SLA timing."""
+"""Download cataloged files from OCIS, convert with Docling, update PostgreSQL with SLA timing."""
 
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 import time
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import quote
 
 import requests
 import xml.etree.ElementTree as ET
@@ -20,15 +18,24 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.folder_to_sqlite_mvp import build_converter, sha256sum
+from scripts.folder_to_sqlite_mvp import sha256sum
 from scripts.owncloud_sync_catalog import (
     normalize_path,
     owncloud_config,
     resolve_drive,
 )
 from workspace.ocr_pipeline.db_postgres import connect, load_dotenv
-
-PDF_SUFFIXES = {".pdf"}
+from workspace.ocr_pipeline.extraction_store import upsert_local_llm_ocr_from_markdown
+from workspace.ocr_pipeline.ingest_converter import build_converter_for_strategy
+from workspace.ocr_pipeline.ingest_formats import (
+    STRATEGY_ASR,
+    STRATEGY_DOCLING_PARSE,
+    STRATEGY_SKIP,
+    is_ingest_allowed,
+    strategy_for_suffix,
+    suffix_from_path,
+)
+from workspace.ocr_pipeline.pipeline_config import load_pipeline_config
 
 
 @dataclass
@@ -40,6 +47,7 @@ class SlaRecord:
     finished_at: str
     duration_seconds: float
     markdown_len: int
+    ingest_strategy: str = ""
     error_message: str | None = None
 
 
@@ -58,9 +66,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--only-pdf",
-        action="store_true",
-        default=True,
-        help="Only process PDF files (default: true).",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Legacy: only PDF. Default uses PIPELINE_INGEST_EXTENSIONS.",
     )
     parser.add_argument("--ocr-engine", choices=["easyocr", "tesseract", "ocrmac"], default="easyocr")
     parser.add_argument("--ocr-lang", default="vi,en")
@@ -162,9 +170,8 @@ def select_documents(
     drive_alias: str,
     limit: int | None,
     only_pdf: bool,
-) -> list[tuple[int, str]]:
+) -> list[tuple[int, str, str]]:
     pattern = f"{drive_alias}%"
-    suffix_clause = "AND lower(owncloud_path) LIKE '%%.pdf'" if only_pdf else ""
     limit_clause = "" if limit is None else "LIMIT %s"
     params: list[object] = [pattern]
     if limit is not None:
@@ -178,13 +185,27 @@ def select_documents(
               AND status = 'cataloged'
               AND coalesce(markdown, '') = ''
               AND owncloud_path NOT ILIKE '%%.DS_Store'
-              {suffix_clause}
             ORDER BY id
             {limit_clause}
             """,
             tuple(params),
         ).fetchall()
-    return [(int(row[0]), normalize_path(row[1])) for row in rows]
+
+    candidates: list[tuple[int, str, str]] = []
+    for doc_id, owncloud_path in rows:
+        path = normalize_path(owncloud_path)
+        if only_pdf:
+            if suffix_from_path(path) != ".pdf":
+                continue
+            strategy = strategy_for_suffix(".pdf") or "docling_ocr"
+        else:
+            if not is_ingest_allowed(path):
+                continue
+            strategy = strategy_for_suffix(suffix_from_path(path))
+            if strategy in (None, STRATEGY_SKIP):
+                continue
+        candidates.append((int(doc_id), path, strategy))
+    return candidates
 
 
 def update_success(
@@ -196,6 +217,9 @@ def update_success(
     doc_dict: dict,
     sla: SlaRecord,
     now: datetime,
+    *,
+    ingest_strategy: str,
+    model_name: str,
 ) -> None:
     doc_dict = dict(doc_dict)
     doc_dict["ocr_sla"] = {
@@ -203,6 +227,7 @@ def update_success(
         "finished_at": sla.finished_at,
         "duration_seconds": sla.duration_seconds,
         "engine": "docling",
+        "ingest_strategy": ingest_strategy,
     }
     conn.execute(
         """
@@ -226,6 +251,13 @@ def update_success(
             now,
             doc_id,
         ),
+    )
+    upsert_local_llm_ocr_from_markdown(
+        conn,
+        doc_id,
+        markdown,
+        model_name=model_name,
+        ingest_strategy=ingest_strategy,
     )
 
 
@@ -262,22 +294,27 @@ def default_sla_report_path() -> Path:
 def main() -> int:
     load_dotenv()
     args = parse_args()
+    pipeline = load_pipeline_config()
     cfg = owncloud_config()
     drive = resolve_drive(cfg, args.drive_alias)
     limit = None if args.all else args.limit
     candidates = select_documents(args.drive_alias, limit, args.only_pdf)
     if not candidates:
-        print("No cataloged documents pending OCR.")
+        print("No cataloged documents pending ingest.")
         return 0
 
-    converter = build_converter(ocr_args_namespace(args))
+    ocr_args = ocr_args_namespace(args)
+    converter_cache: dict[str, object] = {}
     batch_started = datetime.now(UTC)
     batch_t0 = time.perf_counter()
     sla_records: list[SlaRecord] = []
 
-    print(f"Batch OCR start: {batch_started.isoformat()} files={len(candidates)}")
+    print(
+        f"Batch ingest start: {batch_started.isoformat()} files={len(candidates)} "
+        f"only_pdf={args.only_pdf}"
+    )
 
-    for doc_id, owncloud_path in candidates:
+    for doc_id, owncloud_path, ingest_strategy in candidates:
         rel = catalog_rel_path(owncloud_path, args.drive_alias)
         local_file = args.work_dir / rel
         started_at = datetime.now(UTC)
@@ -290,9 +327,15 @@ def main() -> int:
             finished_at="",
             duration_seconds=0.0,
             markdown_len=0,
+            ingest_strategy=ingest_strategy,
         )
         try:
-            print(f"[START] id={doc_id} {owncloud_path}")
+            print(f"[START] id={doc_id} strategy={ingest_strategy} {owncloud_path}")
+            if ingest_strategy not in converter_cache:
+                converter_cache[ingest_strategy] = build_converter_for_strategy(
+                    ingest_strategy, ocr_args
+                )
+            converter = converter_cache[ingest_strategy]
             download_file(cfg, drive, rel, local_file)
             file_hash = sha256sum(local_file)
             result = converter.convert(local_file)
@@ -304,6 +347,13 @@ def main() -> int:
             sla.finished_at = finished_at.isoformat()
             sla.duration_seconds = round(duration, 3)
             sla.markdown_len = len(markdown)
+            model_name = (
+                "docling-parse"
+                if ingest_strategy == STRATEGY_DOCLING_PARSE
+                else "whisper-turbo"
+                if ingest_strategy == STRATEGY_ASR
+                else pipeline.raw_ocr_model
+            )
             with connect() as conn:
                 update_success(
                     conn,
@@ -314,9 +364,12 @@ def main() -> int:
                     doc_dict,
                     sla,
                     finished_at,
+                    ingest_strategy=ingest_strategy,
+                    model_name=model_name,
                 )
             print(
-                f"[OK] id={doc_id} duration={sla.duration_seconds}s md_len={sla.markdown_len}"
+                f"[OK] id={doc_id} strategy={ingest_strategy} "
+                f"duration={sla.duration_seconds}s md_len={sla.markdown_len}"
             )
         except Exception as exc:
             finished_at = datetime.now(UTC)
@@ -348,6 +401,7 @@ def main() -> int:
         ),
         "ocr_engine": args.ocr_engine,
         "drive_alias": args.drive_alias,
+        "only_pdf": args.only_pdf,
         "records": [asdict(r) for r in sla_records],
     }
 
@@ -356,7 +410,7 @@ def main() -> int:
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(
-        f"Batch OCR end: {batch_finished.isoformat()} "
+        f"Batch ingest end: {batch_finished.isoformat()} "
         f"duration={batch_duration}s success={success} failure={failure}"
     )
     print(f"SLA report: {report_path}")

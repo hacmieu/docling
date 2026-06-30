@@ -6,6 +6,7 @@ import base64
 import io
 import json
 import os
+import re
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -84,10 +85,19 @@ def call_vision_ocr(
     headers = {"Content-Type": "application/json"}
     rate_limit = os.environ.get("CELERY_VISION_RATE_LIMIT", "10/m")
     _ = rate_limit
-    for attempt in range(6):
+    for attempt in range(8):
         response = requests.post(endpoint, headers=headers, json=payload, timeout=180)
         if response.status_code == 429:
-            time.sleep(min(90, 5 * (2**attempt)))
+            wait_s = min(120, 15 * (2**attempt))
+            try:
+                err = response.json().get("error", {})
+                msg = str(err.get("message", ""))
+                match = re.search(r"retry in ([0-9.]+)s", msg, re.I)
+                if match:
+                    wait_s = max(wait_s, int(float(match.group(1))) + 2)
+            except (ValueError, TypeError, json.JSONDecodeError):
+                pass
+            time.sleep(wait_s)
             continue
         response.raise_for_status()
         data = response.json()

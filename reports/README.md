@@ -4,6 +4,8 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260630_1115-asr-vision-sequential-report.md](./20260630_1115-asr-vision-sequential-report.md): ASR 498/498; vision JPG blocked Google 429 RPM.
+- [20260630_1040-multi-format-ingest-report.md](./20260630_1040-multi-format-ingest-report.md): Báo cáo ingest 27/27 docx+jpg; 1 m4a pending; re-enrich 27 doc.
 - [20260630_1005-multi-format-ingest-report.md](./20260630_1005-multi-format-ingest-report.md): Báo cáo Word/Excel/ảnh hội tụ markdown + bảng catalog pending.
 - [20260630_0915-dual-lane-pipeline-config-report.md](./20260630_0915-dual-lane-pipeline-config-report.md): Báo cáo flow EasyOCR→DeepSeek và Vision→enrich, bảng VAR.
 - [20260630_0901-vision-ai-metadata-report.md](./20260630_0901-vision-ai-metadata-report.md): Giải thích + fix cột ai_* trống trên Vision Teable.

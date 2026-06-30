@@ -93,6 +93,66 @@ def inherit_document_ai_metadata(conn: Any, document_id: int, extraction_id: int
     return True
 
 
+def upsert_local_llm_ocr_from_markdown(
+    conn: Any,
+    document_id: int,
+    markdown: str,
+    *,
+    model_name: str,
+    ingest_strategy: str,
+) -> int:
+    """Create or refresh local_llm_ocr extraction after ingest → markdown."""
+    from workspace.ocr_pipeline.pipeline_config import load_pipeline_config
+
+    source_type = load_pipeline_config().source_raw
+    existing = conn.execute(
+        """
+        SELECT id FROM document_extractions
+        WHERE document_id = %s AND source_type = %s
+        ORDER BY id DESC LIMIT 1
+        """,
+        (document_id, source_type),
+    ).fetchone()
+    summary = f"Ingest markdown ({ingest_strategy})"
+    if existing:
+        extraction_id = int(existing[0])
+        conn.execute(
+            """
+            UPDATE document_extractions SET
+                raw_text = %s,
+                extracted_summary = %s,
+                model_name = %s,
+                version_status = 'active',
+                updated_at = NOW()
+            WHERE id = %s
+            """,
+            (markdown, summary, model_name, extraction_id),
+        )
+        return extraction_id
+
+    version_no = next_version_no(conn, document_id)
+    row = conn.execute(
+        """
+        INSERT INTO document_extractions (
+            document_id, version_no, source_type, priority_score, version_status,
+            raw_text, extracted_summary, model_name, created_by
+        ) VALUES (%s, %s, %s, %s, 'active', %s, %s, %s, %s)
+        RETURNING id
+        """,
+        (
+            document_id,
+            version_no,
+            source_type,
+            SOURCE_PRIORITY.get(source_type, SOURCE_PRIORITY["local_llm_ocr"]),
+            markdown,
+            summary,
+            model_name,
+            "system:ingest_pipeline",
+        ),
+    ).fetchone()
+    return int(row[0])
+
+
 def upsert_deepseek_extraction(
     conn: Any,
     document_id: int,

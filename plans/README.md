@@ -4,6 +4,8 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260630_1115-asr-vision-sequential-plan.md](./20260630_1115-asr-vision-sequential-plan.md): ASR xong; vision JPG chờ quota; resume PDF batch sau.
+- [20260630_1040-multi-format-ingest-plan.md](./20260630_1040-multi-format-ingest-plan.md): Plan thực thi ingest docx/jpg + enrich; m4a ASR pending.
 - [20260630_1005-multi-format-ingest-plan.md](./20260630_1005-multi-format-ingest-plan.md): Routing docx/xlsx/ảnh → markdown; mở rộng ocr_catalog_postgres.
 - [20260630_0915-dual-lane-pipeline-config-plan.md](./20260630_0915-dual-lane-pipeline-config-plan.md): Thiết kế 2 lane + enrich + toàn bộ VAR trong pipeline_config.
 - [20260630_0901-vision-ai-metadata-plan.md](./20260630_0901-vision-ai-metadata-plan.md): Kế thừa metadata enrich sang Vision extraction cho Teable ai_*.
