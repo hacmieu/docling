@@ -99,7 +99,7 @@
       }
       .layout {
         display: grid;
-        grid-template-columns: 1fr 380px;
+        grid-template-columns: 1fr minmax(400px, 42vw);
         gap: 0;
         min-height: calc(100vh - 200px);
       }
@@ -142,13 +142,36 @@
         display: flex;
         flex-direction: column;
         gap: 12px;
-        overflow: auto;
+        overflow: hidden;
         max-height: calc(100vh - 160px);
       }
-      .aside h2 { margin: 0; font-size: 15px; }
+      .aside-form {
+        flex: 0 1 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow-y: auto;
+        min-height: 0;
+        max-height: 42%;
+      }
+      .answer-section {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: 0;
+        border-top: 1px solid var(--border);
+        padding-top: 12px;
+      }
+      .answer-section h2 { margin: 0; font-size: 15px; }
       textarea { resize: vertical; width: 100%; }
-      #question { min-height: 72px; }
-      #contextBlock { min-height: 140px; font-family: ui-monospace, monospace; font-size: 11px; }
+      #question { min-height: 64px; max-height: 96px; }
+      #contextBlock {
+        min-height: 100px;
+        max-height: 160px;
+        font-family: ui-monospace, monospace;
+        font-size: 11px;
+      }
       .token-panel {
         background: #0f172a;
         border: 1px solid var(--border);
@@ -162,12 +185,14 @@
         background: #0f172a;
         border: 1px solid var(--border);
         border-radius: 10px;
-        padding: 14px;
+        padding: 14px 16px;
         font-size: 13px;
+        line-height: 1.65;
         white-space: pre-wrap;
-        max-height: 360px;
-        overflow: auto;
-        flex: 1;
+        word-break: break-word;
+        overflow-y: auto;
+        flex: 1 1 auto;
+        min-height: 280px;
       }
       .answer-box.empty { color: var(--muted); font-style: italic; }
       .loading { color: var(--warn); font-size: 13px; }
@@ -235,28 +260,39 @@
       </section>
 
       <aside class="aside">
-        <h2>DeepSeek tổng hợp</h2>
+        <div class="aside-form">
+          <h2>LLM tổng hợp</h2>
 
-        <div class="token-panel" id="tokenPanel">
-          <div><strong id="tokenTotal">~0 tokens</strong> ước lượng trước khi gửi</div>
-          <div style="color:var(--muted);margin-top:4px">
-            Câu hỏi: <span id="tokenQ">0</span> · Context: <span id="tokenCtx">0</span> ·
-            <span id="tokenDocs">0</span> tài liệu
+          <div class="token-panel" id="tokenPanel">
+            <div><strong id="tokenTotal">~0 tokens</strong> ước lượng trước khi gửi</div>
+            <div style="color:var(--muted);margin-top:4px">
+              Câu hỏi: <span id="tokenQ">0</span> · Context: <span id="tokenCtx">0</span> ·
+              <span id="tokenDocs">0</span> tài liệu
+            </div>
           </div>
+
+          <label style="font-size:12px;color:var(--muted)">Câu hỏi gửi LLM</label>
+          <textarea id="question" placeholder="VD: Tóm tắt hồ sơ và liệt kê chứng chỉ còn hiệu lực">Tóm tắt toàn bộ hồ sơ và các giấy tờ quan trọng</textarea>
+
+          <label style="font-size:12px;color:var(--muted)">
+            Context gửi kèm (sửa / bớt dòng để giảm tokens)
+          </label>
+          <textarea id="contextBlock" placeholder="Sau khi Tìm kiếm, metadata catalog hiện ở đây…" readonly></textarea>
+
+          <div class="synth-footer" id="synthFooter">
+            <span class="doc-count"><strong id="footerDocs">0</strong> tài liệu chọn</span>
+            <span class="token-badge" id="footerTokens">~0 tokens</span>
+          </div>
+
+          <button class="primary" id="synthBtn" disabled>Gửi LLM tổng hợp</button>
+          <div id="synthStatus"></div>
         </div>
 
-        <label style="font-size:12px;color:var(--muted)">Câu hỏi gửi LLM</label>
-        <textarea id="question" placeholder="VD: Tóm tắt hồ sơ và liệt kê chứng chỉ còn hiệu lực">Tóm tắt toàn bộ hồ sơ và các giấy tờ quan trọng</textarea>
-
-        <label style="font-size:12px;color:var(--muted)">
-          Context gửi kèm (sửa / bớt dòng để giảm tokens)
-        </label>
-        <textarea id="contextBlock" placeholder="Sau khi Tìm kiếm, metadata catalog hiện ở đây…" readonly></textarea>
-
-        <button class="primary" id="synthBtn" disabled>Gửi DeepSeek tổng hợp</button>
-        <div id="synthStatus"></div>
-        <div class="answer-box empty" id="answer">Kết quả trả lời sẽ hiển thị ở đây.</div>
-        <div class="model-tag" id="modelTag"></div>
+        <div class="answer-section">
+          <h2>Kết quả trả lời</h2>
+          <div class="answer-box empty" id="answer">Kết quả trả lời sẽ hiển thị ở đây.</div>
+          <div class="model-tag" id="modelTag"></div>
+        </div>
       </aside>
     </div>
 
@@ -280,6 +316,8 @@
       const tokenQ = document.getElementById("tokenQ");
       const tokenCtx = document.getElementById("tokenCtx");
       const tokenDocs = document.getElementById("tokenDocs");
+      const footerDocs = document.getElementById("footerDocs");
+      const footerTokens = document.getElementById("footerTokens");
 
       let currentPack = null;
       let allDocuments = [];
@@ -311,6 +349,8 @@
         tokenCtx.textContent = `~${tCtx}`;
         tokenDocs.textContent = String(docs.length);
         tokenTotal.textContent = `~${tTotal} tokens`;
+        footerDocs.textContent = String(docs.length);
+        footerTokens.textContent = `~${tTotal} tokens`;
         const ok = docs.length > 0 && ctx.length >= 80 && q.length >= 5;
         tokenPanel.classList.toggle("ok", ok);
         tokenPanel.classList.toggle("warn", !ok);
@@ -460,7 +500,7 @@
 
         synthBtn.disabled = true;
         const est = estimateTokens(question + "\n\n" + contextBlock);
-        synthStatus.innerHTML = `<span class="loading">DeepSeek đang tổng hợp… (~${est} tokens)</span>`;
+        synthStatus.innerHTML = `<span class="loading">LLM đang tổng hợp… (~${est} tokens · ${docCount} tài liệu)</span>`;
         answerEl.textContent = "";
         answerEl.classList.remove("empty");
 
@@ -482,7 +522,7 @@
           synthStatus.innerHTML = "";
         } catch (err) {
           synthStatus.innerHTML = `<span class="error">${esc(err.message)}</span>`;
-          answerEl.textContent = "Lỗi khi gọi DeepSeek.";
+          answerEl.textContent = "Lỗi khi gọi LLM.";
           answerEl.classList.add("empty");
         } finally {
           updateTokenPanel();
