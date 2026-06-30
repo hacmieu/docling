@@ -100,7 +100,7 @@ def _fetch_extraction_row(extraction_id: int) -> tuple[Any, ...] | None:
         SELECT
             e.id, e.document_id, e.version_no, e.source_type, e.priority_score,
             e.version_status, e.category, e.doc_type, e.tags, e.key_fields,
-            e.extracted_summary, e.raw_text, e.model_name, e.created_by, e.created_at
+            e.extracted_summary, e.raw_text, e.model_name, e.enrich_model, e.created_by, e.created_at
         FROM document_extractions e
         WHERE e.id = %s
     """

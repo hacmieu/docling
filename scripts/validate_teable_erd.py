@@ -39,6 +39,7 @@ CANONICAL_EXTRACTION_FIELD_NAMES: frozenset[str] = frozenset(
         "extracted_summary",
         "raw_text_preview",
         "model_name",
+        "enrich_model",
         "created_by",
         "created_at",
         "document",

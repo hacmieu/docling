@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -27,6 +28,12 @@ def main() -> int:
     )
     parser.add_argument("--resync-teable", action="store_true", default=True)
     parser.add_argument("--no-resync-teable", action="store_false", dest="resync_teable")
+    parser.add_argument(
+        "--sleep-seconds",
+        type=float,
+        default=30.0,
+        help="Pause between enrich calls (Google free-tier pacing).",
+    )
     args = parser.parse_args()
 
     clause = "" if args.force else "AND (category IS NULL OR category = '')"
@@ -65,6 +72,8 @@ def main() -> int:
             except Exception as exc:
                 fail += 1
                 print(f"[FAIL] doc_id={doc_id} ext_id={ext_id} {exc}")
+            if args.sleep_seconds > 0:
+                time.sleep(args.sleep_seconds)
 
     print(f"Vision enrich: ok={enriched} fail={fail}")
 

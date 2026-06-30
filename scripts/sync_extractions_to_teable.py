@@ -154,6 +154,7 @@ def build_fields(
         extracted_summary,
         raw_text,
         model_name,
+        enrich_model,
         created_by,
         created_at,
     ) = row
@@ -170,6 +171,7 @@ def build_fields(
         "extracted_summary": extracted_summary or "",
         "raw_text_preview": (raw_text or "")[:MARKDOWN_PREVIEW_LEN],
         "model_name": model_name or "",
+        "enrich_model": enrich_model or "",
         "created_by": created_by or "",
         "created_at": created_at.isoformat() if created_at else "",
     }
@@ -224,7 +226,7 @@ def select_extractions(source_types: list[str] | None, limit: int) -> list[tuple
         SELECT
             e.id, e.document_id, e.version_no, e.source_type, e.priority_score,
             e.version_status, e.category, e.doc_type, e.tags, e.key_fields,
-            e.extracted_summary, e.raw_text, e.model_name, e.created_by, e.created_at
+            e.extracted_summary, e.raw_text, e.model_name, e.enrich_model, e.created_by, e.created_at
         FROM document_extractions e
         JOIN documents d ON d.id = e.document_id
         WHERE {type_filter}

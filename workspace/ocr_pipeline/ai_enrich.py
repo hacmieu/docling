@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import Any, Literal
 
@@ -13,7 +14,11 @@ from workspace.ocr_pipeline.metadata_normalize import (
     normalize_doc_type,
     normalize_tags,
 )
-from workspace.ocr_pipeline.pipeline_config import PipelineConfig, load_pipeline_config
+from workspace.ocr_pipeline.pipeline_config import (
+    PipelineConfig,
+    load_pipeline_config,
+    vision_api_key,
+)
 
 Lane = Literal["raw", "vision"]
 
@@ -36,15 +41,45 @@ Tên file: {filename}
 """
 
 
+def _enrich_provider(lane: Lane, config: PipelineConfig) -> str:
+    if lane == "vision":
+        return config.vision_enrich_provider.lower()
+    return "aibox"
+
+
 def enrich_api_config(lane: Lane, config: PipelineConfig | None = None) -> dict[str, str]:
     cfg = config or load_pipeline_config()
+    provider = _enrich_provider(lane, cfg)
+    if provider == "google":
+        key = vision_api_key(cfg)
+        if not key:
+            raise RuntimeError("GOOGLE_API_KEY required for vision enrich via Google API")
+        return {
+            "provider": "google",
+            "key": key,
+            "url": cfg.vision_api_url.rstrip("/"),
+            "model": cfg.vision_enrich_model,
+        }
     model = cfg.raw_enrich_model if lane == "raw" else cfg.vision_enrich_model
     if not cfg.enrich_api_key:
         raise RuntimeError("PIPELINE_ENRICH_API_KEY or AI_BOX_API_KEY missing in .env")
-    return {"key": cfg.enrich_api_key, "url": cfg.enrich_api_url.rstrip("/"), "model": model}
+    return {
+        "provider": "aibox",
+        "key": cfg.enrich_api_key,
+        "url": cfg.enrich_api_url.rstrip("/"),
+        "model": model,
+    }
 
 
-def call_ai_enrich(
+def _parse_json_content(content: str) -> dict[str, object]:
+    text = content.strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+    return json.loads(text)
+
+
+def call_aibox_enrich(
     ocr_text: str,
     filename: str,
     api_cfg: dict[str, str],
@@ -73,15 +108,79 @@ def call_ai_enrich(
             continue
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]
-        return json.loads(content)
+        return _parse_json_content(content)
     raise RuntimeError("AI enrich API rate limited")
+
+
+def call_google_enrich(
+    ocr_text: str,
+    filename: str,
+    api_cfg: dict[str, str],
+    *,
+    max_chars: int = 12000,
+) -> dict[str, object]:
+    prompt = ENRICH_PROMPT.format(
+        filename=filename,
+        markdown=ocr_text[:max_chars],
+    )
+    endpoint = f"{api_cfg['url']}/models/{api_cfg['model']}:generateContent?key={api_cfg['key']}"
+    payload = {
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.1,
+            "responseMimeType": "application/json",
+        },
+    }
+    headers = {"Content-Type": "application/json"}
+    timeout_s = 120
+    for attempt in range(6):
+        try:
+            response = requests.post(endpoint, headers=headers, json=payload, timeout=timeout_s)
+        except requests.Timeout:
+            if attempt < 5:
+                time.sleep(min(60, 10 * (2**attempt)))
+                continue
+            raise RuntimeError("Google enrich API timed out") from None
+        if response.status_code in {429, 503}:
+            wait_s = min(90, 10 * (2**attempt))
+            try:
+                msg = str(response.json().get("error", {}).get("message", ""))
+                match = re.search(r"retry in ([0-9.]+)s", msg, re.I)
+                if match:
+                    wait_s = max(wait_s, int(float(match.group(1))) + 2)
+            except (ValueError, TypeError, json.JSONDecodeError):
+                pass
+            time.sleep(wait_s)
+            continue
+        response.raise_for_status()
+        data = response.json()
+        candidates = data.get("candidates") or []
+        if not candidates:
+            return {}
+        parts = candidates[0].get("content", {}).get("parts", [])
+        texts = [str(part.get("text", "")) for part in parts if part.get("text")]
+        content = "\n".join(texts).strip()
+        return _parse_json_content(content) if content else {}
+    raise RuntimeError("Google enrich API rate limited")
+
+
+def call_ai_enrich(
+    ocr_text: str,
+    filename: str,
+    api_cfg: dict[str, str],
+    *,
+    max_chars: int = 12000,
+) -> dict[str, object]:
+    if api_cfg.get("provider") == "google":
+        return call_google_enrich(ocr_text, filename, api_cfg, max_chars=max_chars)
+    return call_aibox_enrich(ocr_text, filename, api_cfg, max_chars=max_chars)
 
 
 def apply_enrichment_to_extraction(
     conn: Any,
     extraction_id: int,
     data: dict[str, object],
-    model_name: str,
+    enrich_model: str,
 ) -> None:
     tags = [str(t) for t in data.get("tags", []) if str(t).strip()]
     cat_slug, cat_label = normalize_category(str(data.get("category", "")))
@@ -95,7 +194,7 @@ def apply_enrichment_to_extraction(
             tags = %s::jsonb,
             key_fields = %s::jsonb,
             extracted_summary = %s,
-            model_name = %s,
+            enrich_model = %s,
             version_status = 'active',
             updated_at = NOW()
         WHERE id = %s
@@ -106,7 +205,7 @@ def apply_enrichment_to_extraction(
             json.dumps(norm_tags, ensure_ascii=False),
             json.dumps(data.get("key_fields", {}), ensure_ascii=False),
             str(data.get("review_vi", "")),
-            model_name,
+            enrich_model,
             extraction_id,
         ),
     )
