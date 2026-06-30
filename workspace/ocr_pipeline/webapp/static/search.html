@@ -173,12 +173,26 @@
       .loading { color: var(--warn); font-size: 13px; }
       .error { color: #f87171; font-size: 13px; }
       .model-tag { font-size: 11px; color: var(--muted); }
+      .synth-footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        background: #0f172a;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+      .synth-footer .doc-count strong { color: var(--accent); font-size: 15px; }
     </style>
   </head>
   <body>
     <header>
       <div>
-        <h1>Tìm kiếm metadata + DeepSeek</h1>
+        <h1>Tìm kiếm metadata + LLM</h1>
         <div class="sub">Lọc theo nhân sự / bằng cấp → xem tokens → tổng hợp bằng AI</div>
       </div>
       <a href="/">← Catalog đầy đủ</a>
