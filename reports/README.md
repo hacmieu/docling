@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260630_1914-two-pass-ai-metadata-report.md](./20260630_1914-two-pass-ai-metadata-report.md): Xác nhận cần AI ngữ cảnh; enrich đã có; Gemini gộp 1 lần là tối ưu tương lai.
 - [20260630_1910-metadata-to-database-guide.md](./20260630_1910-metadata-to-database-guide.md): Hướng dẫn đưa metadata vào Postgres (JSONB key_fields, enrich, backfill).
 - [20260630_1805-staff-search-guide-report.md](./20260630_1805-staff-search-guide-report.md): Hướng dẫn tìm bác sĩ (Teable/API/SQL); ví dụ Trần Đức Hiển 7 doc.
 - [20260630_1747-dev-best-results-report.md](./20260630_1747-dev-best-results-report.md): DEV hoàn tất vision 21/21; Teable ERD ready trừ 1 orphan link.

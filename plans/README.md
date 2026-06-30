@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260630_1914-two-pass-ai-metadata-extraction-plan.md](./20260630_1914-two-pass-ai-metadata-extraction-plan.md): 2 lượt AI; schema theo doc_type; tùy chọn Gemini single-pass.
 - [20260630_1910-per-doctype-metadata-schema-plan.md](./20260630_1910-per-doctype-metadata-schema-plan.md): Schema metadata theo doc_type; metadata_schemas_vi.json; view hết hạn.
 - [20260630_1805-staff-certificate-search-plan.md](./20260630_1805-staff-certificate-search-plan.md): Plan tìm nhân sự + chứng chỉ còn hạn; mở rộng key_fields ngay_het_han.
 - [20260630_1747-teable-erd-standardization-plan.md](./20260630_1747-teable-erd-standardization-plan.md): Chuẩn ERD OwnCloud/DocExtractions; validate script; xóa orphan link.

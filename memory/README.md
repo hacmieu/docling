@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260630_1914-two-pass-ai-metadata-playbook.md](./20260630_1914-two-pass-ai-metadata-playbook.md): OCR + enrich (lượt 2) đã có; Gemini chưa single-pass.
 - [20260630_1910-metadata-db-ingestion-playbook.md](./20260630_1910-metadata-db-ingestion-playbook.md): Luồng OCR→enrich→key_fields JSONB; không nhập tay từng file.
 - [20260630_1805-staff-search-playbook.md](./20260630_1805-staff-search-playbook.md): Playbook tìm bác sĩ (path/API/Teable); chứng chỉ hết hạn — gap ngay_het_han.
 - [20260630_1747-dev-vision-teable-erd-completion.md](./20260630_1747-dev-vision-teable-erd-completion.md): Vision 21/21 JPG; Teable ERD audit; orphan _link_child_test.
