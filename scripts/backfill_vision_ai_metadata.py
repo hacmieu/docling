@@ -36,7 +36,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    clause = "" if args.force else "AND (category IS NULL OR category = '')"
+    clause = "" if args.force else "AND (e.enrich_model IS NULL OR e.enrich_model = '')"
     with connect() as conn:
         rows = conn.execute(
             f"""
