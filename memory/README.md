@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260630_1605-status-checkpoint.md](./20260630_1605-status-checkpoint.md): Snapshot 498 success; vision 21 JPG còn pending do quota 429.
 - [20260630_1115-asr-vision-sequential.md](./20260630_1115-asr-vision-sequential.md): ASR doc 991 OK; vision 21 JPG blocked 429; dừng batch song song.
 - [20260630_1040-multi-format-ingest-execution.md](./20260630_1040-multi-format-ingest-execution.md): Triển khai ingest 27/28 non-PDF; enrich force 27 doc; m4a skip.
 - [20260630_1005-multi-format-markdown-strategy.md](./20260630_1005-multi-format-markdown-strategy.md): Word/Excel/ảnh → markdown; ingest_formats + VAR PIPELINE_INGEST_*.
