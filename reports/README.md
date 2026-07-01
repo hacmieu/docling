@@ -4,6 +4,7 @@ Single Source of Truth for execution reports.
 
 ## Entries
 
+- [20260701_1007-postgres-cache-teable-sot-discussion-report.md](./20260701_1007-postgres-cache-teable-sot-discussion-report.md): Thảo luận PG cache vs Teable SoT; search nhanh vì đọc PG; khuyến nghị CQRS+webhook.
 - [20260630_2315-teable-sot-architecture-report.md](./20260630_2315-teable-sot-architecture-report.md): Teable = SoT; gap search đọc Postgres; kiến trúc mục tiêu.
 - [20260630_2308-synthesize-ux-fix-report.md](./20260630_2308-synthesize-ux-fix-report.md): Sửa UX tokens trước gửi + prompt DeepSeek tổng hợp.
 - [20260630_1925-metadata-rollout-report.md](./20260630_1925-metadata-rollout-report.md): Triển khai 2-step enrich, view certificate_status, pilot CCCD doc 831.

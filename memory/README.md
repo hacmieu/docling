@@ -4,6 +4,7 @@ Single Source of Truth for memory logs.
 
 ## Entries
 
+- [20260701_1007-postgres-cache-teable-sot-workflow.md](./20260701_1007-postgres-cache-teable-sot-workflow.md): Postgres = cache/staging; Teable SoT; CQRS; conflict Teable thắng.
 - [20260630_2315-teable-sot-policy.md](./20260630_2315-teable-sot-policy.md): **Policy kiên quyết** — Teable là SoT metadata; Postgres chỉ pipeline staging.
 - [20260630_2308-synthesize-context-token-fix.md](./20260630_2308-synthesize-context-token-fix.md): Fix prompt synthesize; UI context + tokens trước gửi.
 - [20260630_1925-gemini-deepseek-metadata-rollout.md](./20260630_1925-gemini-deepseek-metadata-rollout.md): Triển khai schema + 2-step enrich + backfill vision DSv4 Pro.

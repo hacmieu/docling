@@ -6,7 +6,7 @@
 
 **Teable** là SoT cho metadata catalog mà con người tra cứu, sửa, và lọc.
 
-**Postgres** vẫn là engine xử lý (OCR, enrich, batch) — **không** là SoT cho metadata đã publish.
+**Postgres** vẫn là engine xử lý (OCR, enrich, batch) và **read cache** derive từ Teable — **không** là SoT cho metadata đã publish.
 
 ## Hiện trạng (cần đổi)
 
