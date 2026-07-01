@@ -29,7 +29,15 @@ from workspace.ocr_pipeline.concept_search import (
 from workspace.ocr_pipeline.db_postgres import connect, database_url, load_dotenv
 from workspace.ocr_pipeline.llm_context_pack import search_context_pack
 from workspace.ocr_pipeline.search_qa import answer_from_search_items, synthesize_from_context_pack
-from workspace.ocr_pipeline.teable_catalog import DRIVE_PREFIX_DEFAULT, display_path
+from workspace.ocr_pipeline.teable_catalog import DRIVE_PREFIX_DEFAULT
+from workspace.ocr_pipeline.teable_read import (
+    catalog_stats as teable_catalog_stats,
+    get_document as teable_get_document,
+    is_teable_configured,
+    list_documents as teable_list_documents,
+    list_extractions_for_doc,
+    public_config as teable_public_config,
+)
 
 
 def json_default(value: Any) -> Any:
@@ -355,12 +363,115 @@ def build_handler(db: PgCatalogDb, static_dir: Path):
                 self._send_file(static_dir / "search.html", "text/html; charset=utf-8")
                 return
 
+            if parsed.path in ("/teable", "/teable.html"):
+                self._send_file(static_dir / "teable.html", "text/html; charset=utf-8")
+                return
+
             if parsed.path == "/api/health":
                 self._send_json({"ok": True, "database": database_url().split("@")[-1]})
                 return
 
             if parsed.path == "/api/stats":
                 self._send_json({"ok": True, "stats": db.stats()})
+                return
+
+            if parsed.path == "/api/teable/config":
+                if not is_teable_configured():
+                    self._send_json(
+                        {
+                            "ok": False,
+                            "configured": False,
+                            "error": "Thiếu TEABLE_* trong .env",
+                        }
+                    )
+                    return
+                try:
+                    self._send_json(
+                        {"ok": True, "configured": True, **teable_public_config()}
+                    )
+                except Exception as exc:
+                    self._send_json({"ok": False, "error": str(exc)}, 502)
+                return
+
+            if parsed.path == "/api/teable/stats":
+                if not is_teable_configured():
+                    self._send_json({"ok": False, "error": "Teable chưa cấu hình"}, 503)
+                    return
+                try:
+                    stats = teable_catalog_stats()
+                except Exception as exc:
+                    self._send_json({"ok": False, "error": str(exc)}, 502)
+                    return
+                self._send_json({"ok": True, "stats": stats, "source": "teable"})
+                return
+
+            if parsed.path == "/api/teable/documents":
+                if not is_teable_configured():
+                    self._send_json({"ok": False, "error": "Teable chưa cấu hình"}, 503)
+                    return
+                qs = parse_qs(parsed.query)
+                limit = max(1, min(int(qs.get("limit", ["50"])[0]), 200))
+                offset = max(0, int(qs.get("offset", ["0"])[0]))
+                query = qs.get("q", [None])[0]
+                phong_ban = qs.get("phong_ban", [None])[0]
+                teable_status = qs.get("teable_status", [None])[0]
+                exclude_hidden = qs.get("exclude_hidden", ["1"])[0] not in (
+                    "0",
+                    "false",
+                    "no",
+                )
+                try:
+                    items, total = teable_list_documents(
+                        limit=limit,
+                        offset=offset,
+                        query=query,
+                        phong_ban=phong_ban,
+                        teable_status=teable_status,
+                        exclude_hidden=exclude_hidden,
+                    )
+                except Exception as exc:
+                    self._send_json({"ok": False, "error": str(exc)}, 502)
+                    return
+                self._send_json(
+                    {
+                        "ok": True,
+                        "items": items,
+                        "total": total,
+                        "limit": limit,
+                        "offset": offset,
+                        "source": "teable",
+                    }
+                )
+                return
+
+            if parsed.path.startswith("/api/teable/documents/"):
+                if not is_teable_configured():
+                    self._send_json({"ok": False, "error": "Teable chưa cấu hình"}, 503)
+                    return
+                record_id = parsed.path.rsplit("/", 1)[1]
+                try:
+                    item = teable_get_document(record_id)
+                except Exception as exc:
+                    self._send_json({"ok": False, "error": str(exc)}, 502)
+                    return
+                if not item:
+                    self._send_json({"ok": False, "error": "not found"}, 404)
+                    return
+                doc_id = item.get("doc_id")
+                extractions: list[dict[str, Any]] = []
+                if doc_id is not None:
+                    try:
+                        extractions = list_extractions_for_doc(int(doc_id))
+                    except (TypeError, ValueError):
+                        extractions = []
+                self._send_json(
+                    {
+                        "ok": True,
+                        "item": item,
+                        "extractions": extractions,
+                        "source": "teable",
+                    }
+                )
                 return
 
             if parsed.path == "/api/search":

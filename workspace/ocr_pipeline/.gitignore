@@ -29,9 +29,11 @@
 !webapp/static/index.html
 !webapp/static/catalog.html
 !webapp/static/search.html
+!webapp/static/teable.html
 !ocr_schema.py
 !db_postgres.py
 !teable_catalog.py
+!teable_read.py
 !extraction_priority.py
 !metadata_normalize.py
 !metadata_schema.py

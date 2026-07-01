@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Teable Catalog — HTH</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Be Vietnam Pro", "Noto Sans", system-ui, sans-serif;
+        --bg: #eef2f7; --surface: #fff; --surface-muted: #f8fafc;
+        --border: #dbe3ef; --border-strong: #cbd5e1; --text: #0f172a; --muted: #64748b;
+        --accent: #2563eb; --accent-hover: #1d4ed8; --accent-soft: #eff6ff; --accent-border: #bfdbfe;
+        --ok: #15803d; --ok-soft: #f0fdf4; --teal: #0d9488; --teal-soft: #f0fdfa;
+        --warn: #b45309; --error: #dc2626;
+        --radius-sm: 8px; --radius-md: 12px; --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05); --header-h: 56px;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100dvh; }
+      .app-header { height: var(--header-h); padding: 0 20px; background: var(--surface); border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: space-between; gap: 16px; position: sticky; top: 0; z-index: 20; box-shadow: var(--shadow-sm); }
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .brand-mark { width: 32px; height: 32px; border-radius: var(--radius-sm);
+        background: linear-gradient(135deg, var(--teal) 0%, #0f766e 100%); color: #fff; font-size: 11px; font-weight: 700;
+        display: grid; place-items: center; }
+      .brand h1 { margin: 0; font-size: 15px; font-weight: 700; }
+      .brand p { margin: 0; font-size: 12px; color: var(--muted); }
+      .nav-tabs { display: flex; gap: 4px; background: var(--surface-muted); padding: 4px; border-radius: 999px; border: 1px solid var(--border); }
+      .nav-tabs a { padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; text-decoration: none; color: var(--muted); white-space: nowrap; }
+      .nav-tabs a:hover { color: var(--text); background: #fff; }
+      .nav-tabs a.active { background: #fff; color: var(--teal); box-shadow: var(--shadow-sm); }
+      .sot-banner { padding: 10px 20px; background: var(--teal-soft); border-bottom: 1px solid #99f6e4; font-size: 13px; color: #115e59; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+      .sot-banner a { color: var(--teal); font-weight: 600; }
+      .workflow { display: flex; flex-wrap: wrap; gap: 8px 20px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 13px; }
+      .step { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }
+      .step-num { width: 22px; height: 22px; border-radius: 999px; border: 1px solid var(--border-strong); display: grid; place-items: center; font-size: 11px; font-weight: 700; background: #fff; }
+      .step.active { color: var(--text); font-weight: 600; }
+      .step.active .step-num { background: var(--teal-soft); border-color: #99f6e4; color: var(--teal); }
+      .app-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 420px); gap: 16px; padding: 16px 20px 20px; }
+      @media (max-width: 1024px) { .app-body { grid-template-columns: 1fr; } .nav-tabs { display: none; } }
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; display: flex; flex-direction: column; }
+      .card-head { padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--surface-muted); }
+      .card-head h2 { margin: 0; font-size: 15px; font-weight: 700; }
+      .card-head p { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+      .card-body { padding: 16px; }
+      .filter-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      @media (max-width: 640px) { .filter-form { grid-template-columns: 1fr; } }
+      .field { display: flex; flex-direction: column; gap: 6px; }
+      .field.span-2 { grid-column: 1 / -1; }
+      .field label { font-size: 12px; font-weight: 600; }
+      .field .hint { font-size: 11px; color: var(--muted); }
+      input, select, button { font: inherit; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: #fff; color: var(--text); padding: 10px 12px; font-size: 13px; }
+      input:focus, select:focus { outline: 2px solid var(--teal); border-color: var(--teal); }
+      button { cursor: pointer; font-weight: 600; }
+      button:active:not(:disabled) { transform: scale(0.98); }
+      button.primary { background: var(--teal); color: #fff; border-color: var(--teal); padding: 10px 18px; }
+      button.primary:hover:not(:disabled) { background: #0f766e; }
+      button.secondary { background: #fff; color: var(--text); border-color: var(--border-strong); padding: 8px 14px; }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+      .check-field { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-muted); font-size: 13px; cursor: pointer; }
+      .form-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; align-items: center; }
+      .stats-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+      .chip { display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--teal-soft); color: var(--teal); border: 1px solid #99f6e4; }
+      .chip.neutral { background: var(--surface-muted); color: var(--muted); border-color: var(--border); font-weight: 500; }
+      .table-scroll { overflow: auto; max-height: calc(100dvh - 400px); min-height: 240px; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th { position: sticky; top: 0; z-index: 1; background: var(--surface-muted); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+      td { padding: 10px 12px; border-bottom: 1px solid #eef2f7; vertical-align: top; }
+      tbody tr { cursor: pointer; }
+      tbody tr:hover td { background: #f8fafc; }
+      tbody tr.active td { background: var(--teal-soft); }
+      .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+      .badge.done { background: #dcfce7; color: #166534; }
+      .badge.progress { background: #fef9c3; color: #854d0e; }
+      .badge.todo { background: #e2e8f0; color: #334155; }
+      .path { color: var(--muted); font-size: 12px; max-width: 260px; word-break: break-word; }
+      .pager { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface-muted); font-size: 13px; color: var(--muted); }
+      .detail-scroll { overflow: auto; padding: 16px; max-height: calc(100dvh - 220px); }
+      .section { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #eef2f7; }
+      .section-label { display: block; margin-bottom: 8px; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+      pre { background: var(--surface-muted); border: 1px solid var(--border); padding: 12px; border-radius: var(--radius-sm); white-space: pre-wrap; word-break: break-word; font-size: 12px; margin: 0; max-height: 200px; overflow: auto; }
+      pre.tall { max-height: 280px; }
+      .empty-state { padding: 40px 24px; text-align: center; color: var(--muted); }
+      .empty-state strong { display: block; color: var(--text); font-size: 15px; margin-bottom: 8px; }
+      .ext-card { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px; background: var(--surface-muted); font-size: 12px; }
+      .ext-card strong { display: block; margin-bottom: 4px; }
+      .error { color: var(--error); }
+      .copied { color: var(--ok) !important; border-color: #86efac !important; background: var(--ok-soft) !important; }
+    </style>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark">TB</div>
+        <div>
+          <h1>Teable Catalog</h1>
+          <p>OwnCloud + DocExtractions · SoT metadata</p>
+        </div>
+      </div>
+      <nav class="nav-tabs">
+        <a href="/">Postgres</a>
+        <a href="/teable" class="active" aria-current="page">Teable</a>
+        <a href="/search">Tìm kiếm + AI</a>
+      </nav>
+    </header>
+
+    <div class="sot-banner" id="sotBanner">
+      <span><strong>Single Source of Truth:</strong> metadata hiển thị từ Teable API (bảng OwnCloud + DocExtractions).</span>
+      <a href="#" id="openTeable" target="_blank" rel="noopener" style="display:none">Mở Teable ↗</a>
+    </div>
+
+    <div class="workflow">
+      <span class="step active" id="step1"><span class="step-num">1</span> Lọc Teable</span>
+      <span class="step" id="step2"><span class="step-num">2</span> Chọn tài liệu</span>
+      <span class="step" id="step3"><span class="step-num">3</span> Xem extraction</span>
+    </div>
+
+    <main class="app-body">
+      <section class="card">
+        <div class="card-head">
+          <h2>Bảng OwnCloud (Teable)</h2>
+          <p>Đọc trực tiếp từ Teable REST API. Postgres catalog vẫn dùng cho OCR raw.</p>
+        </div>
+        <div class="card-body" style="padding-bottom:0;border-bottom:1px solid var(--border)">
+          <form class="filter-form" onsubmit="return false">
+            <div class="field span-2">
+              <label for="search">Từ khóa</label>
+              <input id="search" placeholder="Tên file, path, doc ID, phòng ban..." autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="teableStatus">Status Teable</label>
+              <select id="teableStatus">
+                <option value="">Tất cả</option>
+                <option value="Done">Done</option>
+                <option value="In progress">In progress</option>
+                <option value="To do">To do</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="phongBan">Phòng ban</label>
+              <input id="phongBan" placeholder="VD: CĐHA" />
+            </div>
+            <div class="field span-2">
+              <label class="check-field">
+                <input type="checkbox" id="hideHidden" checked />
+                Ẩn file rác (.DS_Store)
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="primary" id="reload">Tải lại</button>
+            </div>
+          </form>
+        </div>
+        <div class="stats-bar" id="stats"><span class="chip neutral">Đang tải...</span></div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>File</th>
+                <th>Phòng ban</th>
+                <th>Status</th>
+                <th>Source</th>
+                <th>Versions</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span id="pagerInfo">—</span>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="secondary" id="prev">Trước</button>
+            <button type="button" class="secondary" id="next">Sau</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div class="card-head">
+          <h2>Chi tiết + DocExtractions</h2>
+          <p>Metadata AI theo version (Teable SoT).</p>
+        </div>
+        <div class="detail-scroll" id="detail">
+          <div class="empty-state">
+            <strong>Chưa chọn tài liệu</strong>
+            Click dòng trong bảng OwnCloud để xem extraction liên kết.
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <script>
+      const rowsEl = document.getElementById("rows");
+      const detailEl = document.getElementById("detail");
+      const statsEl = document.getElementById("stats");
+      const searchEl = document.getElementById("search");
+      const statusEl = document.getElementById("teableStatus");
+      const phongEl = document.getElementById("phongBan");
+      const hideHiddenEl = document.getElementById("hideHidden");
+      const reloadBtn = document.getElementById("reload");
+      const prevBtn = document.getElementById("prev");
+      const nextBtn = document.getElementById("next");
+      const pagerInfoEl = document.getElementById("pagerInfo");
+      const openTeableEl = document.getElementById("openTeable");
+      const steps = [document.getElementById("step1"), document.getElementById("step2"), document.getElementById("step3")];
+
+      const pageSize = 50;
+      let offset = 0;
+      let total = 0;
+      let activeId = null;
+      let teableAppUrl = "";
+
+      function setStep(n) {
+        steps.forEach((el, i) => el.classList.toggle("active", i + 1 === n));
+      }
+
+      function esc(s) {
+        return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+      }
+
+      function statusBadge(s) {
+        const v = String(s || "");
+        let cls = "todo";
+        if (v === "Done") cls = "done";
+        else if (v === "In progress") cls = "progress";
+        return `<span class="badge ${cls}">${esc(v || "-")}</span>`;
+      }
+
+      async function loadConfig() {
+        const res = await fetch("/api/teable/config");
+        const data = await res.json();
+        if (data.ok && data.app_url) {
+          teableAppUrl = data.app_url;
+          openTeableEl.href = teableAppUrl;
+          openTeableEl.style.display = "inline";
+        }
+        if (!data.ok) {
+          statsEl.innerHTML = `<span class="chip neutral error">${esc(data.error || "Teable chưa cấu hình")}</span>`;
+          rowsEl.innerHTML = `<tr><td colspan="6"><div class="empty-state error"><strong>Chưa kết nối Teable</strong>Kiểm tra TEABLE_API_URL, TOKEN, TABLE IDs trong .env</div></td></tr>`;
+          return false;
+        }
+        return true;
+      }
+
+      async function fetchStats() {
+        const res = await fetch("/api/teable/stats");
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "stats error");
+        const s = data.stats;
+        statsEl.innerHTML = `
+          <span class="chip">${s.documents} OwnCloud</span>
+          <span class="chip">${s.extractions} DocExtractions</span>
+          <span class="chip neutral">Nguồn Teable API</span>`;
+      }
+
+      function queryParams() {
+        const q = new URLSearchParams();
+        q.set("limit", String(pageSize));
+        q.set("offset", String(offset));
+        if (searchEl.value.trim()) q.set("q", searchEl.value.trim());
+        if (statusEl.value) q.set("teable_status", statusEl.value);
+        if (phongEl.value.trim()) q.set("phong_ban", phongEl.value.trim());
+        if (!hideHiddenEl.checked) q.set("exclude_hidden", "0");
+        return q;
+      }
+
+      async function fetchTable() {
+        const res = await fetch(`/api/teable/documents?${queryParams()}`);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "list error");
+        const items = data.items || [];
+        total = data.total || 0;
+        rowsEl.innerHTML = "";
+        if (items.length === 0) {
+          rowsEl.innerHTML = `<tr><td colspan="6"><div class="empty-state"><strong>Không có kết quả</strong>Thử đổi bộ lọc hoặc sync Postgres → Teable.</div></td></tr>`;
+        }
+        for (const item of items) {
+          const tr = document.createElement("tr");
+          if (item.teable_id === activeId) tr.classList.add("active");
+          tr.innerHTML = `
+            <td>${esc(item.doc_id ?? "-")}</td>
+            <td><strong>${esc(item.file_name || item.label || "-")}</strong></td>
+            <td>${esc(item.phong_ban || "-")}</td>
+            <td>${statusBadge(item.teable_status)}</td>
+            <td style="font-size:12px">${esc(item.active_source || "-")}</td>
+            <td>${esc(item.extraction_version_count ?? "-")}</td>`;
+          tr.onclick = () => openDetail(item.teable_id);
+          rowsEl.appendChild(tr);
+        }
+        const from = total === 0 ? 0 : offset + 1;
+        const to = Math.min(offset + pageSize, total);
+        pagerInfoEl.textContent = `${from}-${to} / ${total}`;
+        prevBtn.disabled = offset <= 0;
+        nextBtn.disabled = offset + pageSize >= total;
+        if (activeId) setStep(3);
+        else if (items.length) setStep(2);
+        else setStep(1);
+      }
+
+      async function copyText(text, btn) {
+        const payload = String(text || "").trim();
+        if (!payload) return;
+        try { await navigator.clipboard.writeText(payload); } catch { /* ignore */ }
+        const orig = btn.textContent;
+        btn.textContent = "Đã copy";
+        btn.classList.add("copied");
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove("copied"); }, 1500);
+      }
+
+      async function openDetail(teableId) {
+        activeId = teableId;
+        setStep(2);
+        detailEl.innerHTML = '<div class="empty-state"><span>Đang tải...</span></div>';
+        await fetchTable();
+        const res = await fetch(`/api/teable/documents/${encodeURIComponent(teableId)}`);
+        const data = await res.json();
+        if (!data.ok) {
+          detailEl.innerHTML = `<div class="empty-state error">${esc(data.error)}</div>`;
+          return;
+        }
+        const d = data.item;
+        const exts = data.extractions || [];
+        setStep(3);
+
+        const extHtml = exts.length
+          ? exts.map((e) => `
+              <div class="ext-card">
+                <strong>${esc(e.version_label || e.source_type)} · ${esc(e.version_status || "")}</strong>
+                <div>type: ${esc(e.ai_doc_type || "-")} | cat: ${esc(e.ai_category || "-")}</div>
+                <div style="color:var(--muted);margin-top:4px">${esc((e.extracted_summary || "").slice(0, 160))}${(e.extracted_summary || "").length > 160 ? "…" : ""}</div>
+              </div>`).join("")
+          : '<p style="color:var(--muted);font-size:13px">Chưa có DocExtractions liên kết doc_id này.</p>';
+
+        detailEl.innerHTML = `
+          <h2 style="margin:0 0 4px;font-size:16px">${esc(d.file_name || d.label)}</h2>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">#${esc(d.doc_id)} · ${statusBadge(d.teable_status)} · PG status ${esc(d.catalog_status || "-")}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+            <button type="button" class="secondary" id="copyPath">Copy path</button>
+            <button type="button" class="secondary" id="copyPreview">Copy preview</button>
+          </div>
+          <div class="section"><span class="section-label">OwnCloud path</span><pre>${esc(d.owncloud_path || "")}</pre></div>
+          <div class="section"><span class="section-label">Active extraction</span><pre>source=${esc(d.active_source || "-")}
+priority=${esc(d.active_priority ?? "-")}
+versions=${esc(d.extraction_version_count ?? "-")}</pre></div>
+          <div class="section"><span class="section-label">Markdown preview</span><pre class="tall">${esc(d.markdown_preview || "(trống)")}</pre></div>
+          <div class="section"><span class="section-label">DocExtractions (${exts.length})</span>${extHtml}</div>`;
+
+        document.getElementById("copyPath").onclick = (e) => copyText(d.owncloud_path, e.currentTarget);
+        document.getElementById("copyPreview").onclick = (e) => copyText(d.markdown_preview, e.currentTarget);
+      }
+
+      async function refreshAll() {
+        try {
+          await fetchStats();
+          await fetchTable();
+        } catch (err) {
+          statsEl.innerHTML = `<span class="chip neutral error">${esc(err.message)}</span>`;
+        }
+      }
+
+      reloadBtn.onclick = () => { offset = 0; refreshAll(); };
+      searchEl.onkeydown = (e) => { if (e.key === "Enter") { offset = 0; refreshAll(); } };
+      statusEl.onchange = () => { offset = 0; refreshAll(); };
+      phongEl.onkeydown = (e) => { if (e.key === "Enter") { offset = 0; refreshAll(); } };
+      hideHiddenEl.onchange = () => { offset = 0; refreshAll(); };
+      prevBtn.onclick = () => { offset = Math.max(0, offset - pageSize); fetchTable(); };
+      nextBtn.onclick = () => { offset += pageSize; fetchTable(); };
+
+      loadConfig().then((ok) => { if (ok) refreshAll(); });
+    </script>
+  </body>
+</html>
