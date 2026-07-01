@@ -76,6 +76,30 @@
       button.primary { background: var(--accent); color: #0f172a; border-color: var(--accent); }
       button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
       button.ghost { background: transparent; }
+      button.copy-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        background: transparent;
+        color: var(--accent);
+        border-color: var(--border);
+      }
+      button.copy-btn:hover:not(:disabled) {
+        background: var(--accent-dim);
+        border-color: var(--accent);
+      }
+      button.copy-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+      button.copy-btn.copied {
+        color: var(--ok);
+        border-color: var(--ok);
+      }
+      .label-row, .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .label-row label, .section-head h2 { margin: 0; }
       .stats {
         display: flex;
         flex-wrap: wrap;
@@ -164,6 +188,11 @@
         padding-top: 12px;
       }
       .answer-section h2 { margin: 0; font-size: 15px; }
+      .copy-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
       textarea { resize: vertical; width: 100%; }
       #question { min-height: 64px; max-height: 96px; }
       #contextBlock {
@@ -274,9 +303,12 @@
           <label style="font-size:12px;color:var(--muted)">Câu hỏi gửi LLM</label>
           <textarea id="question" placeholder="VD: Tóm tắt hồ sơ và liệt kê chứng chỉ còn hiệu lực">Tóm tắt toàn bộ hồ sơ và các giấy tờ quan trọng</textarea>
 
-          <label style="font-size:12px;color:var(--muted)">
-            Context gửi kèm (sửa / bớt dòng để giảm tokens)
-          </label>
+          <div class="label-row">
+            <label style="font-size:12px;color:var(--muted)">
+              Context gửi kèm (sửa / bớt dòng để giảm tokens)
+            </label>
+            <button type="button" class="copy-btn" id="copyContextBtn" disabled title="Sao chép metadata context">Copy context</button>
+          </div>
           <textarea id="contextBlock" placeholder="Sau khi Tìm kiếm, metadata catalog hiện ở đây…" readonly></textarea>
 
           <div class="synth-footer" id="synthFooter">
@@ -284,12 +316,21 @@
             <span class="token-badge" id="footerTokens">~0 tokens</span>
           </div>
 
+          <div class="copy-actions">
+            <button type="button" class="copy-btn" id="copyChatBtn" disabled title="Sao chép câu hỏi + context để dán vào ChatGPT / Claude">
+              Copy → AI Chat
+            </button>
+          </div>
+
           <button class="primary" id="synthBtn" disabled>Gửi LLM tổng hợp</button>
           <div id="synthStatus"></div>
         </div>
 
         <div class="answer-section">
-          <h2>Kết quả trả lời</h2>
+          <div class="section-head">
+            <h2>Kết quả trả lời</h2>
+            <button type="button" class="copy-btn" id="copyAnswerBtn" disabled title="Sao chép kết quả LLM">Copy</button>
+          </div>
           <div class="answer-box empty" id="answer">Kết quả trả lời sẽ hiển thị ở đây.</div>
           <div class="model-tag" id="modelTag"></div>
         </div>
@@ -318,6 +359,9 @@
       const tokenDocs = document.getElementById("tokenDocs");
       const footerDocs = document.getElementById("footerDocs");
       const footerTokens = document.getElementById("footerTokens");
+      const copyContextBtn = document.getElementById("copyContextBtn");
+      const copyChatBtn = document.getElementById("copyChatBtn");
+      const copyAnswerBtn = document.getElementById("copyAnswerBtn");
 
       let currentPack = null;
       let allDocuments = [];
@@ -325,6 +369,52 @@
 
       function estimateTokens(text) {
         return Math.max(1, Math.ceil(String(text || "").length / 4));
+      }
+
+      function buildChatPack() {
+        const q = questionEl.value.trim();
+        const ctx = contextEl.value.trim();
+        const docs = selectedIds.size;
+        const label = currentPack?.query || queryEl.value.trim() || "catalog";
+        const header = `# Hồ sơ catalog — ${label} (${docs} tài liệu)\n\n`;
+        if (!q) {
+          return header + ctx;
+        }
+        return `${header}## Câu hỏi\n${q}\n\n## Dữ liệu metadata\n\n${ctx}`;
+      }
+
+      async function copyText(text, btn) {
+        const payload = String(text || "").trim();
+        if (!payload) return false;
+        try {
+          await navigator.clipboard.writeText(payload);
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = payload;
+          ta.style.position = "fixed";
+          ta.style.left = "-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        }
+        const orig = btn.textContent;
+        btn.textContent = "Đã copy!";
+        btn.classList.add("copied");
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.classList.remove("copied");
+        }, 1600);
+        return true;
+      }
+
+      function updateCopyButtons() {
+        const ctx = contextEl.value.trim();
+        const hasCtx = ctx.length >= 80;
+        const hasAnswer = !answerEl.classList.contains("empty") && answerEl.textContent.trim().length > 0;
+        copyContextBtn.disabled = !hasCtx;
+        copyChatBtn.disabled = !hasCtx;
+        copyAnswerBtn.disabled = !hasAnswer;
       }
 
       function buildContextFromDocs(docs, queryLabel) {
@@ -356,6 +446,7 @@
         tokenPanel.classList.toggle("warn", !ok);
         synthBtn.disabled = !ok;
         contextEl.readOnly = docs.length === 0;
+        updateCopyButtons();
       }
 
       function rebuildContext() {
@@ -402,6 +493,7 @@
         answerEl.textContent = "Kết quả trả lời sẽ hiển thị ở đây.";
         answerEl.classList.add("empty");
         modelTag.textContent = "";
+        updateCopyButtons();
 
         const params = new URLSearchParams();
         params.set("mode", modeEl.value);
@@ -520,6 +612,7 @@
           modelTag.textContent =
             `${data.model || "deepseek"} · gửi ~${data.estimated_tokens_input || est} tokens · ${data.doc_count} doc`;
           synthStatus.innerHTML = "";
+          updateCopyButtons();
         } catch (err) {
           synthStatus.innerHTML = `<span class="error">${esc(err.message)}</span>`;
           answerEl.textContent = "Lỗi khi gọi LLM.";
@@ -531,6 +624,9 @@
 
       searchBtn.onclick = runSearch;
       synthBtn.onclick = runSynthesize;
+      copyContextBtn.onclick = () => copyText(contextEl.value, copyContextBtn);
+      copyChatBtn.onclick = () => copyText(buildChatPack(), copyChatBtn);
+      copyAnswerBtn.onclick = () => copyText(answerEl.textContent, copyAnswerBtn);
       queryEl.onkeydown = (e) => { if (e.key === "Enter") runSearch(); };
     </script>
   </body>
