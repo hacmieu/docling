@@ -3,69 +3,307 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>HTH OCR Catalog — PostgreSQL</title>
+    <title>OCR Catalog — HTH</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
         color-scheme: light;
         font-family: "Be Vietnam Pro", "Noto Sans", system-ui, sans-serif;
-        --bg: #f1f5f9;
-        --panel: #ffffff;
+        --bg: #eef2f7;
+        --surface: #ffffff;
+        --surface-muted: #f8fafc;
         --border: #dbe3ef;
+        --border-strong: #cbd5e1;
         --text: #0f172a;
         --muted: #64748b;
         --accent: #2563eb;
+        --accent-hover: #1d4ed8;
         --accent-soft: #eff6ff;
+        --accent-border: #bfdbfe;
+        --ok: #15803d;
+        --ok-soft: #f0fdf4;
+        --warn: #b45309;
+        --error: #dc2626;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05);
+        --header-h: 56px;
       }
       * { box-sizing: border-box; }
-      body { margin: 0; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.45; }
-      header {
-        padding: 14px 18px;
-        background: var(--panel);
-        border-bottom: 1px solid var(--border);
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 100dvh;
       }
-      h1 { margin: 0 0 4px; font-size: 18px; }
-      .sub { color: var(--muted); font-size: 13px; }
-      .toolbar {
+
+      .app-header {
+        height: var(--header-h);
+        padding: 0 20px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        box-shadow: var(--shadow-sm);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-sm);
+        background: linear-gradient(135deg, var(--accent) 0%, #1e40af 100%);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+      .brand h1 { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.2; }
+      .brand p { margin: 0; font-size: 12px; color: var(--muted); }
+      .nav-tabs {
+        display: flex;
+        gap: 4px;
+        background: var(--surface-muted);
+        padding: 4px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+      }
+      .nav-tabs a {
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .nav-tabs a:hover { color: var(--text); background: #fff; }
+      .nav-tabs a.active {
+        background: #fff;
+        color: var(--accent);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .workflow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 20px;
+        padding: 12px 20px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+      }
+      .step {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+      }
+      .step-num {
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        border: 1px solid var(--border-strong);
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        font-weight: 700;
+        background: #fff;
+      }
+      .step.active { color: var(--text); font-weight: 600; }
+      .step.active .step-num {
+        background: var(--accent-soft);
+        border-color: var(--accent-border);
+        color: var(--accent);
+      }
+
+      .app-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+        gap: 16px;
+        padding: 16px 20px 20px;
+        min-height: calc(100dvh - var(--header-h) - 49px);
+      }
+      @media (max-width: 1024px) {
+        .app-body { grid-template-columns: 1fr; }
+        .nav-tabs { display: none; }
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .card-head {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface-muted);
+      }
+      .card-head h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .card-head p {
+        margin: 4px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .card-body { padding: 16px; }
+
+      .filter-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      @media (max-width: 640px) {
+        .filter-form { grid-template-columns: 1fr; }
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field.span-2 { grid-column: 1 / -1; }
+      .field label {
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .field .hint {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      input, select, button {
+        font: inherit;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-strong);
+        background: #fff;
+        color: var(--text);
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+      input:focus, select:focus {
+        outline: 2px solid var(--accent);
+        outline-offset: 0;
+        border-color: var(--accent);
+      }
+      select { cursor: pointer; }
+      button {
+        cursor: pointer;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      button:active:not(:disabled) { transform: scale(0.98); }
+      button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+        padding: 10px 18px;
+      }
+      button.primary:hover:not(:disabled) {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+      }
+      button.secondary {
+        background: #fff;
+        color: var(--text);
+        border-color: var(--border-strong);
+        padding: 8px 14px;
+      }
+      button.secondary:hover:not(:disabled) { background: var(--surface-muted); }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+      .check-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface-muted);
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .check-field input { width: 16px; height: 16px; margin: 0; padding: 0; }
+      .form-actions {
+        grid-column: 1 / -1;
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
-        padding: 12px 18px;
-        background: var(--panel);
-        border-bottom: 1px solid var(--border);
+        align-items: center;
+        justify-content: flex-end;
       }
-      input, select, button {
-        background: #fff;
-        color: var(--text);
-        border: 1px solid #cbd5e1;
-        padding: 8px 10px;
-        border-radius: 8px;
-        font-size: 13px;
-      }
-      button { cursor: pointer; }
-      button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-      .stats {
-        padding: 8px 18px;
-        font-size: 12px;
+      kbd {
+        font-family: ui-monospace, monospace;
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--border-strong);
+        background: var(--surface-muted);
         color: var(--muted);
-        background: #fff;
+      }
+
+      .stats-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 16px;
         border-bottom: 1px solid var(--border);
+        font-size: 12px;
+        background: #fff;
       }
-      .layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-        gap: 0;
-        min-height: calc(100vh - 140px);
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-weight: 600;
+        background: var(--accent-soft);
+        color: var(--accent);
+        border: 1px solid var(--accent-border);
       }
-      .table-wrap {
+      .chip.neutral {
+        background: var(--surface-muted);
+        color: var(--muted);
+        border-color: var(--border);
+        font-weight: 500;
+      }
+      .chip.ok {
+        background: var(--ok-soft);
+        color: var(--ok);
+        border-color: #86efac;
+      }
+
+      .table-scroll {
         overflow: auto;
-        background: var(--panel);
-        border-right: 1px solid var(--border);
+        flex: 1;
+        min-height: 240px;
+        max-height: calc(100dvh - 380px);
+      }
+      @media (max-width: 1024px) {
+        .table-scroll { max-height: 400px; }
       }
       table {
         width: 100%;
@@ -75,10 +313,16 @@
       thead th {
         position: sticky;
         top: 0;
-        background: #f8fafc;
+        z-index: 1;
+        background: var(--surface-muted);
         text-align: left;
         padding: 10px 12px;
         border-bottom: 1px solid var(--border);
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
         white-space: nowrap;
       }
       tbody td {
@@ -86,16 +330,24 @@
         border-bottom: 1px solid #eef2f7;
         vertical-align: top;
       }
-      tbody tr { cursor: pointer; }
-      tbody tr:hover { background: #f8fafc; }
-      tbody tr.active { background: var(--accent-soft); }
-      .file-name { font-weight: 600; word-break: break-word; font-feature-settings: "locl" 1; }
+      tbody tr {
+        cursor: pointer;
+        transition: background 0.12s;
+      }
+      tbody tr:hover td { background: #f8fafc; }
+      tbody tr.active td { background: var(--accent-soft); }
+      tbody tr.active:hover td { background: #e0edff; }
+      .file-name {
+        font-weight: 600;
+        word-break: break-word;
+        font-feature-settings: "locl" 1;
+        max-width: 200px;
+      }
       .path {
         color: var(--muted);
         font-size: 12px;
-        max-width: 360px;
+        max-width: 280px;
         word-break: break-word;
-        white-space: normal;
         line-height: 1.35;
       }
       .badge {
@@ -109,98 +361,212 @@
       .badge.cataloged { background: #e0e7ff; color: #3730a3; }
       .badge.failure { background: #fee2e2; color: #991b1b; }
       .badge.pending { background: #e2e8f0; color: #334155; }
-      .detail {
-        overflow: auto;
-        padding: 16px;
-        background: #fff;
-      }
-      .detail h2 { margin: 0 0 12px; font-size: 16px; }
-      .section { margin-bottom: 14px; }
-      .section b { display: block; margin-bottom: 4px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-      pre {
-        background: #f8fafc;
-        border: 1px solid var(--border);
-        padding: 10px;
-        border-radius: 8px;
-        white-space: pre-wrap;
-        word-break: break-word;
-        font-size: 12px;
-        margin: 0;
-        max-height: 240px;
-        overflow: auto;
-      }
+      .mono { font-family: ui-monospace, monospace; font-size: 12px; }
+
       .pager {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 10px 12px;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 16px;
         border-top: 1px solid var(--border);
-        background: #fff;
+        background: var(--surface-muted);
         font-size: 13px;
       }
-      .hint { color: var(--muted); font-size: 14px; padding: 24px; }
-      @media (max-width: 960px) {
-        .layout { grid-template-columns: 1fr; }
-        .detail { border-top: 1px solid var(--border); min-height: 40vh; }
+      .pager-info { color: var(--muted); }
+      .pager-btns { display: flex; gap: 8px; }
+
+      .detail-scroll {
+        overflow: auto;
+        flex: 1;
+        padding: 16px;
+        max-height: calc(100dvh - 200px);
       }
+      @media (max-width: 1024px) {
+        .detail-scroll { max-height: 50dvh; }
+      }
+      .detail-title {
+        margin: 0 0 4px;
+        font-size: 16px;
+        font-weight: 700;
+        word-break: break-word;
+      }
+      .detail-id {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 16px;
+      }
+      .section {
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #eef2f7;
+      }
+      .section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+      .section-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      pre {
+        background: var(--surface-muted);
+        border: 1px solid var(--border);
+        padding: 12px;
+        border-radius: var(--radius-sm);
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 12px;
+        line-height: 1.45;
+        margin: 0;
+        max-height: 200px;
+        overflow: auto;
+      }
+      pre.tall { max-height: 320px; }
+      .empty-state {
+        padding: 40px 24px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .empty-state strong {
+        display: block;
+        color: var(--text);
+        font-size: 15px;
+        margin-bottom: 8px;
+      }
+      .detail-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      .detail-actions button { font-size: 12px; padding: 6px 12px; }
+      .loading { color: var(--warn); }
+      .error { color: var(--error); }
+      .copied { color: var(--ok) !important; border-color: #86efac !important; background: var(--ok-soft) !important; }
     </style>
   </head>
   <body>
-    <header>
-      <h1>BV Hưng Thịnh — OCR Catalog</h1>
-      <div class="sub">PostgreSQL · <a href="/search" style="color:var(--accent)">Tìm kiếm metadata + AI</a> · click row để xem detail</div>
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">HTH</div>
+        <div>
+          <h1>OCR Catalog</h1>
+          <p>BV Hưng Thịnh · PostgreSQL</p>
+        </div>
+      </div>
+      <nav class="nav-tabs" aria-label="Điều hướng">
+        <a href="/" class="active" aria-current="page">Catalog</a>
+        <a href="/search">Tìm kiếm + AI</a>
+      </nav>
     </header>
 
-    <div class="toolbar">
-      <input id="search" placeholder="Tìm theo đường dẫn / tên file..." style="min-width:220px" />
-      <select id="status">
-        <option value="">Tất cả status</option>
-        <option value="cataloged">cataloged</option>
-        <option value="success">success</option>
-        <option value="failure">failure</option>
-        <option value="pending">pending</option>
-      </select>
-      <select id="drive">
-        <option value="project/hth-shared-drive" selected>HTH-Shared-Drive (chính)</option>
-        <option value="">Tất cả drives</option>
-        <option value="/Yen">Personal /Yen (cũ)</option>
-      </select>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
-        <input type="checkbox" id="hideHidden" checked />
-        Ẩn file rác (.DS_Store)
-      </label>
-      <button class="primary" id="reload">Tải lại</button>
+    <div class="workflow" aria-label="Quy trình">
+      <span class="step active" id="step1"><span class="step-num">1</span> Lọc catalog</span>
+      <span class="step" id="step2"><span class="step-num">2</span> Chọn tài liệu</span>
+      <span class="step" id="step3"><span class="step-num">3</span> Xem chi tiết</span>
     </div>
 
-    <div class="stats" id="stats">Đang tải thống kê...</div>
+    <main class="app-body">
+      <section class="card">
+        <div class="card-head">
+          <h2>Danh sách tài liệu</h2>
+          <p>Lọc theo đường dẫn, trạng thái OCR hoặc drive. Click dòng để xem metadata.</p>
+        </div>
 
-    <div class="layout">
-      <section class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>File</th>
-              <th>Đường dẫn OCIS</th>
-              <th>Status</th>
-              <th>OCR</th>
-              <th>AI</th>
-              <th>Category</th>
-              <th>Cập nhật</th>
-            </tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
+        <div class="card-body" style="padding-bottom:0;border-bottom:1px solid var(--border)">
+          <form class="filter-form" onsubmit="return false">
+            <div class="field span-2">
+              <label for="search">Từ khóa</label>
+              <input id="search" placeholder="Đường dẫn OCIS hoặc tên file..." autocomplete="off" />
+              <span class="hint">Enter để tìm nhanh</span>
+            </div>
+            <div class="field">
+              <label for="status">Trạng thái</label>
+              <select id="status">
+                <option value="">Tất cả</option>
+                <option value="cataloged">cataloged</option>
+                <option value="success">success</option>
+                <option value="failure">failure</option>
+                <option value="pending">pending</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="drive">Drive OwnCloud</label>
+              <select id="drive">
+                <option value="project/hth-shared-drive" selected>HTH-Shared-Drive</option>
+                <option value="">Tất cả drives</option>
+                <option value="/Yen">Personal /Yen (cũ)</option>
+              </select>
+            </div>
+            <div class="field span-2">
+              <label class="check-field">
+                <input type="checkbox" id="hideHidden" checked />
+                Ẩn file rác (.DS_Store, metadata ẩn)
+              </label>
+            </div>
+            <div class="form-actions">
+              <span style="font-size:12px;color:var(--muted)"><kbd>Enter</kbd> áp dụng bộ lọc</span>
+              <button type="button" class="primary" id="reload">Tải lại</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="stats-bar" id="stats">
+          <span class="chip neutral">Đang tải thống kê...</span>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>File</th>
+                <th>Đường dẫn</th>
+                <th>Status</th>
+                <th>OCR</th>
+                <th>AI</th>
+                <th>Category</th>
+                <th>Cập nhật</th>
+              </tr>
+            </thead>
+            <tbody id="rows">
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">
+                    <strong>Đang tải danh sách...</strong>
+                    Chờ kết nối PostgreSQL catalog.
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         <div class="pager">
-          <button id="prev">← Trước</button>
-          <span id="pagerInfo">—</span>
-          <button id="next">Sau →</button>
+          <span class="pager-info" id="pagerInfo">—</span>
+          <div class="pager-btns">
+            <button type="button" class="secondary" id="prev">Trước</button>
+            <button type="button" class="secondary" id="next">Sau</button>
+          </div>
         </div>
       </section>
-      <aside class="detail" id="detail">
-        <div class="hint">Chọn một dòng trong bảng để xem chi tiết.</div>
+
+      <aside class="card" id="detailCard">
+        <div class="card-head">
+          <h2>Chi tiết tài liệu</h2>
+          <p>Metadata OCR, AI enrich, key fields và markdown.</p>
+        </div>
+        <div class="detail-scroll" id="detail">
+          <div class="empty-state">
+            <strong>Chưa chọn tài liệu</strong>
+            Click một dòng trong bảng bên trái để xem nội dung đầy đủ.
+          </div>
+        </div>
       </aside>
-    </div>
+    </main>
 
     <script>
       const rowsEl = document.getElementById("rows");
@@ -214,33 +580,50 @@
       const prevBtn = document.getElementById("prev");
       const nextBtn = document.getElementById("next");
       const pagerInfoEl = document.getElementById("pagerInfo");
+      const step1 = document.getElementById("step1");
+      const step2 = document.getElementById("step2");
+      const step3 = document.getElementById("step3");
 
       const pageSize = 50;
       let offset = 0;
       let total = 0;
       let activeId = null;
 
+      function setWorkflowStep(n) {
+        [step1, step2, step3].forEach((el, i) => el.classList.toggle("active", i + 1 === n));
+      }
+
       function badge(status) {
         const cls = ["success", "cataloged", "failure"].includes(status) ? status : "pending";
-        return `<span class="badge ${cls}">${escapeHtml(status || "—")}</span>`;
+        return `<span class="badge ${cls}">${escapeHtml(status || "-")}</span>`;
       }
 
       function fileName(path) {
-        if (!path) return "—";
+        if (!path) return "-";
         return path.split("/").pop() || path;
       }
 
       function fmtDate(value) {
-        if (!value) return "—";
+        if (!value) return "-";
         return String(value).replace("T", " ").slice(0, 19);
       }
 
       async function fetchStats() {
-        const res = await fetch("/api/stats");
-        const data = await res.json();
-        const s = data.stats;
-        statsEl.textContent =
-          `HTH-Shared=${s.hth_shared} | tổng DB=${s.total} | legacy /Yen=${s.legacy_yen} | .DS_Store=${s.dotfiles} | OCR ok=${s.success} | cataloged=${s.cataloged}`;
+        try {
+          const res = await fetch("/api/stats");
+          const data = await res.json();
+          const s = data.stats;
+          statsEl.innerHTML = `
+            <span class="chip">HTH ${s.hth_shared}</span>
+            <span class="chip neutral">Tổng ${s.total}</span>
+            <span class="chip ok">OCR ok ${s.success}</span>
+            <span class="chip">cataloged ${s.cataloged}</span>
+            <span class="chip neutral">legacy ${s.legacy_yen}</span>
+            <span class="chip neutral">.DS ${s.dotfiles}</span>
+          `;
+        } catch {
+          statsEl.innerHTML = '<span class="chip neutral error">Không tải được thống kê</span>';
+        }
       }
 
       function queryParams() {
@@ -255,68 +638,154 @@
       }
 
       async function fetchTable() {
-        const res = await fetch(`/api/documents?${queryParams()}`);
-        const data = await res.json();
-        const items = data.items || [];
-        total = data.total || 0;
-        rowsEl.innerHTML = "";
-        if (items.length === 0) {
-          rowsEl.innerHTML = `<tr><td colspan="8" class="hint">Không có bản ghi. Thử bỏ bộ lọc hoặc chạy sync + --prune-missing.</td></tr>`;
+        try {
+          const res = await fetch(`/api/documents?${queryParams()}`);
+          const data = await res.json();
+          const items = data.items || [];
+          total = data.total || 0;
+          rowsEl.innerHTML = "";
+          if (items.length === 0) {
+            rowsEl.innerHTML = `
+              <tr><td colspan="8">
+                <div class="empty-state">
+                  <strong>Không có bản ghi</strong>
+                  Thử bỏ bộ lọc hoặc chạy sync catalog.
+                </div>
+              </td></tr>`;
+          }
+          for (const item of items) {
+            const tr = document.createElement("tr");
+            if (item.id === activeId) tr.classList.add("active");
+            const path = item.owncloud_path || item.source_path || "";
+            tr.innerHTML = `
+              <td class="mono">${item.id}</td>
+              <td class="file-name">${escapeHtml(fileName(path))}</td>
+              <td class="path">${escapeHtml(path)}</td>
+              <td>${badge(item.status)}</td>
+              <td class="mono">${item.markdown_len || 0}</td>
+              <td>${badge(item.ai_review_status || "pending")}</td>
+              <td>${escapeHtml(item.ai_category || "-")}</td>
+              <td style="white-space:nowrap;font-size:12px;color:var(--muted)">${fmtDate(item.updated_at)}</td>
+            `;
+            tr.onclick = () => openDetail(item.id);
+            rowsEl.appendChild(tr);
+          }
+          const from = total === 0 ? 0 : offset + 1;
+          const to = Math.min(offset + pageSize, total);
+          pagerInfoEl.textContent = `Hiển thị ${from}-${to} / ${total} tài liệu`;
+          prevBtn.disabled = offset <= 0;
+          nextBtn.disabled = offset + pageSize >= total;
+          if (activeId) setWorkflowStep(3);
+          else if (items.length > 0) setWorkflowStep(2);
+          else setWorkflowStep(1);
+        } catch (err) {
+          rowsEl.innerHTML = `
+            <tr><td colspan="8">
+              <div class="empty-state error"><strong>Lỗi tải bảng</strong>${escapeHtml(err.message)}</div>
+            </td></tr>`;
         }
-        for (const item of items) {
-          const tr = document.createElement("tr");
-          if (item.id === activeId) tr.classList.add("active");
-          const path = item.owncloud_path || item.source_path || "";
-          tr.innerHTML = `
-            <td>${item.id}</td>
-            <td class="file-name">${escapeHtml(fileName(path))}</td>
-            <td class="path">${escapeHtml(path)}</td>
-            <td>${badge(item.status)}</td>
-            <td>${item.markdown_len || 0}</td>
-            <td>${badge(item.ai_review_status || "pending")}</td>
-            <td>${escapeHtml(item.ai_category || "—")}</td>
-            <td>${fmtDate(item.updated_at)}</td>
-          `;
-          tr.onclick = () => openDetail(item.id);
-          rowsEl.appendChild(tr);
+      }
+
+      async function copyText(text, btn) {
+        const payload = String(text || "").trim();
+        if (!payload) return;
+        try {
+          await navigator.clipboard.writeText(payload);
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = payload;
+          ta.style.position = "fixed";
+          ta.style.left = "-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
         }
-        const from = total === 0 ? 0 : offset + 1;
-        const to = Math.min(offset + pageSize, total);
-        pagerInfoEl.textContent = `${from}–${to} / ${total} (đang lọc)`;
-        prevBtn.disabled = offset <= 0;
-        nextBtn.disabled = offset + pageSize >= total;
+        const orig = btn.textContent;
+        btn.textContent = "Đã copy";
+        btn.classList.add("copied");
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.classList.remove("copied");
+        }, 1500);
       }
 
       async function openDetail(id) {
         activeId = id;
+        setWorkflowStep(2);
+        detailEl.innerHTML = '<div class="empty-state"><span class="loading">Đang tải chi tiết...</span></div>';
         await fetchTable();
         const res = await fetch(`/api/documents/${id}`);
         const data = await res.json();
         if (!data.ok) {
-          detailEl.innerHTML = `<div class="hint">${escapeHtml(data.error || "Không tải được")}</div>`;
+          detailEl.innerHTML = `<div class="empty-state error"><strong>Lỗi</strong>${escapeHtml(data.error || "Không tải được")}</div>`;
           return;
         }
         const d = data.item;
+        const path = d.owncloud_path || d.source_path || "";
         const tags = Array.isArray(d.ai_tags) ? d.ai_tags.join(", ") : JSON.stringify(d.ai_tags || []);
+        const keyFields = JSON.stringify(d.ai_key_fields || {}, null, 2);
+        const markdown = d.markdown || "(chưa OCR)";
+        setWorkflowStep(3);
+
         detailEl.innerHTML = `
-          <h2>#${d.id} — ${escapeHtml(fileName(d.owncloud_path || d.source_path))}</h2>
-          <div class="section"><b>OwnCloud path</b><pre>${escapeHtml(d.owncloud_path || "")}</pre></div>
-          <div class="section"><b>Status / SHA256</b><pre>${escapeHtml(d.status)} | ${escapeHtml(d.source_sha256 || "")}</pre></div>
-          <div class="section"><b>AI metadata</b><pre>doc_type=${d.ai_doc_type || "—"}
-category=${d.ai_category || "—"}
-ocr_quality=${d.ai_ocr_quality || "—"}
-tags=${tags}</pre></div>
-          <div class="section"><b>AI review</b><pre>status=${d.ai_review_status || "pending"}
-model=${d.ai_review_model || "—"}
+          <h2 class="detail-title">${escapeHtml(fileName(path))}</h2>
+          <div class="detail-id">Document #${d.id} · ${badge(d.status)} · cập nhật ${fmtDate(d.updated_at)}</div>
+
+          <div class="detail-actions">
+            <button type="button" class="secondary" id="copyPathBtn">Copy path</button>
+            <button type="button" class="secondary" id="copyKeyBtn">Copy key fields</button>
+            <button type="button" class="secondary" id="copyMdBtn">Copy markdown</button>
+          </div>
+
+          <div class="section">
+            <span class="section-label">OwnCloud path</span>
+            <pre>${escapeHtml(path)}</pre>
+          </div>
+          <div class="section">
+            <span class="section-label">File hash</span>
+            <pre>${escapeHtml(d.source_sha256 || "-")}</pre>
+          </div>
+          <div class="section">
+            <span class="section-label">AI metadata</span>
+            <pre>doc_type=${escapeHtml(d.ai_doc_type || "-")}
+category=${escapeHtml(d.ai_category || "-")}
+ocr_quality=${escapeHtml(d.ai_ocr_quality || "-")}
+tags=${escapeHtml(tags)}</pre>
+          </div>
+          <div class="section">
+            <span class="section-label">AI review</span>
+            <pre>status=${escapeHtml(d.ai_review_status || "pending")}
+model=${escapeHtml(d.ai_review_model || "-")}
 at=${fmtDate(d.ai_review_at)}
 ${escapeHtml(d.ai_review_error || "")}
 
-${escapeHtml(d.ai_review || "(chưa có)")}</pre></div>
-          <div class="section"><b>Key fields (JSON)</b><pre>${escapeHtml(JSON.stringify(d.ai_key_fields || {}, null, 2))}</pre></div>
-          <div class="section"><b>Verified metadata</b><pre>${escapeHtml(JSON.stringify(d.verified_metadata || {}, null, 2))}</pre></div>
-          <div class="section"><b>Markdown OCR</b><pre>${escapeHtml(d.markdown || "(chưa OCR)")}</pre></div>
-          <div class="section"><b>Doc JSON</b><pre>${escapeHtml(JSON.stringify(d.doc_json || {}, null, 2))}</pre></div>
+${escapeHtml(d.ai_review || "(chưa có)")}</pre>
+          </div>
+          <div class="section">
+            <span class="section-label">Key fields</span>
+            <pre>${escapeHtml(keyFields)}</pre>
+          </div>
+          <div class="section">
+            <span class="section-label">Verified metadata</span>
+            <pre>${escapeHtml(JSON.stringify(d.verified_metadata || {}, null, 2))}</pre>
+          </div>
+          <div class="section">
+            <span class="section-label">Markdown OCR</span>
+            <pre class="tall">${escapeHtml(markdown)}</pre>
+          </div>
+          <div class="section">
+            <span class="section-label">Doc JSON</span>
+            <pre>${escapeHtml(JSON.stringify(d.doc_json || {}, null, 2))}</pre>
+          </div>
         `;
+
+        document.getElementById("copyPathBtn").onclick = (e) =>
+          copyText(path, e.currentTarget);
+        document.getElementById("copyKeyBtn").onclick = (e) =>
+          copyText(keyFields, e.currentTarget);
+        document.getElementById("copyMdBtn").onclick = (e) =>
+          copyText(markdown, e.currentTarget);
       }
 
       function escapeHtml(text) {
