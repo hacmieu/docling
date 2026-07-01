@@ -13,21 +13,29 @@
       :root {
         color-scheme: light;
         font-family: "Be Vietnam Pro", "Noto Sans", system-ui, sans-serif;
-        --bg: #f1f5f9;
-        --panel: #ffffff;
-        --panel2: #f8fafc;
+        --bg: #eef2f7;
+        --surface: #ffffff;
+        --surface-muted: #f8fafc;
         --border: #dbe3ef;
-        --border-input: #cbd5e1;
+        --border-strong: #cbd5e1;
         --text: #0f172a;
         --muted: #64748b;
         --accent: #2563eb;
         --accent-hover: #1d4ed8;
-        --accent-dim: #eff6ff;
-        --ok: #16a34a;
-        --ok-dim: #f0fdf4;
-        --warn: #d97706;
-        --warn-dim: #fffbeb;
+        --accent-soft: #eff6ff;
+        --accent-border: #bfdbfe;
+        --ok: #15803d;
+        --ok-soft: #f0fdf4;
+        --ok-border: #86efac;
+        --warn: #b45309;
+        --warn-soft: #fffbeb;
+        --warn-border: #fcd34d;
         --error: #dc2626;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05);
+        --shadow-md: 0 4px 16px rgb(15 23 42 / 0.06);
+        --header-h: 56px;
       }
       * { box-sizing: border-box; }
       body {
@@ -36,37 +44,178 @@
         color: var(--text);
         font-size: 14px;
         line-height: 1.5;
-        min-height: 100vh;
+        min-height: 100dvh;
       }
-      header {
-        padding: 16px 20px;
-        background: var(--panel);
+
+      /* App chrome */
+      .app-header {
+        height: var(--header-h);
+        padding: 0 20px;
+        background: var(--surface);
         border-bottom: 1px solid var(--border);
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
+        gap: 16px;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        box-shadow: var(--shadow-sm);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
         gap: 12px;
+        min-width: 0;
       }
-      h1 { margin: 0; font-size: 18px; font-weight: 600; color: var(--text); }
-      .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
-      header a { color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500; }
-      header a:hover { color: var(--accent-hover); text-decoration: underline; }
-      .search-bar {
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-sm);
+        background: linear-gradient(135deg, var(--accent) 0%, #1e40af 100%);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
         display: grid;
-        grid-template-columns: 140px 1fr 160px auto auto;
-        gap: 10px;
-        padding: 16px 20px;
-        background: var(--panel);
-        border-bottom: 1px solid var(--border);
+        place-items: center;
+        flex-shrink: 0;
       }
-      @media (max-width: 900px) {
-        .search-bar { grid-template-columns: 1fr 1fr; }
+      .brand h1 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      .brand p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .nav-tabs {
+        display: flex;
+        gap: 4px;
+        background: var(--surface-muted);
+        padding: 4px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+      }
+      .nav-tabs a {
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .nav-tabs a:hover { color: var(--text); background: #fff; }
+      .nav-tabs a.active {
+        background: #fff;
+        color: var(--accent);
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* Workflow */
+      .workflow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 20px;
+        padding: 12px 20px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+      }
+      .step {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+      }
+      .step-num {
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        border: 1px solid var(--border-strong);
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        font-weight: 700;
+        background: #fff;
+      }
+      .step.active { color: var(--text); font-weight: 600; }
+      .step.active .step-num {
+        background: var(--accent-soft);
+        border-color: var(--accent-border);
+        color: var(--accent);
+      }
+
+      /* Layout */
+      .app-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(380px, 440px);
+        gap: 16px;
+        padding: 16px 20px 20px;
+        min-height: calc(100dvh - var(--header-h) - 49px);
+      }
+      @media (max-width: 1024px) {
+        .app-body { grid-template-columns: 1fr; }
+        .nav-tabs { display: none; }
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+      }
+      .card-head {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        background: var(--surface-muted);
+      }
+      .card-head h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .card-head p {
+        margin: 4px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+        max-width: 42ch;
+      }
+      .card-body { padding: 16px; }
+
+      /* Search form */
+      .search-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px 12px;
+      }
+      @media (max-width: 640px) {
+        .search-form { grid-template-columns: 1fr; }
+      }
+      .field { display: flex; flex-direction: column; gap: 6px; }
+      .field.span-2 { grid-column: 1 / -1; }
+      .field label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .field .hint {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: -2px;
       }
       input, select, textarea, button {
         font: inherit;
-        border-radius: 8px;
-        border: 1px solid var(--border-input);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-strong);
         background: #fff;
         color: var(--text);
         padding: 10px 12px;
@@ -76,306 +225,509 @@
         outline-offset: 0;
         border-color: var(--accent);
       }
+      input:disabled { background: var(--surface-muted); color: var(--muted); }
+      select { cursor: pointer; }
+      #mode { display: none; }
+      .mode-pills {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .mode-pill {
+        flex: 1;
+        min-width: 140px;
+        padding: 10px 12px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        background: #fff;
+        cursor: pointer;
+        text-align: left;
+        transition: border-color 0.15s, background 0.15s;
+      }
+      .mode-pill:hover { border-color: var(--accent-border); }
+      .mode-pill.active {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        box-shadow: inset 0 0 0 1px var(--accent-border);
+      }
+      .mode-pill strong {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 2px;
+      }
+      .mode-pill span {
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+      .check-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface-muted);
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .check-field input { width: 16px; height: 16px; margin: 0; padding: 0; }
+      .form-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: flex-end;
+        padding-top: 4px;
+      }
       button {
         cursor: pointer;
         font-weight: 600;
         white-space: nowrap;
       }
+      button:active:not(:disabled) { transform: scale(0.98); }
       button.primary {
         background: var(--accent);
         color: #fff;
         border-color: var(--accent);
+        padding: 10px 18px;
       }
       button.primary:hover:not(:disabled) {
         background: var(--accent-hover);
         border-color: var(--accent-hover);
       }
-      button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
-      button.ghost { background: transparent; }
-      button.copy-btn {
-        padding: 4px 10px;
-        font-size: 11px;
-        font-weight: 600;
+      button.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+      button.secondary {
         background: #fff;
         color: var(--accent);
-        border-color: var(--border-input);
+        border-color: var(--accent-border);
+        padding: 8px 14px;
+        font-size: 13px;
       }
-      button.copy-btn:hover:not(:disabled) {
-        background: var(--accent-dim);
-        border-color: var(--accent);
+      button.secondary:hover:not(:disabled) {
+        background: var(--accent-soft);
       }
-      button.copy-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-      button.copy-btn.copied {
+      button.secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+      button.secondary.copied {
         color: var(--ok);
-        border-color: var(--ok);
-        background: var(--ok-dim);
+        border-color: var(--ok-border);
+        background: var(--ok-soft);
       }
-      .label-row, .section-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
+      kbd {
+        font-family: ui-monospace, monospace;
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--border-strong);
+        background: var(--surface-muted);
+        color: var(--muted);
       }
-      .label-row label, .section-head h2 { margin: 0; }
-      .stats {
+
+      /* Results */
+      .results-card { display: flex; flex-direction: column; min-height: 0; }
+      .results-bar {
         display: flex;
         flex-wrap: wrap;
-        gap: 16px;
-        padding: 12px 20px;
+        align-items: center;
+        gap: 10px 16px;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border);
         font-size: 13px;
         color: var(--muted);
-        background: var(--panel);
-        border-bottom: 1px solid var(--border);
+        background: #fff;
       }
-      .stat strong { color: var(--text); }
-      .token-badge {
+      .chip {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: var(--accent-dim);
-        color: var(--accent);
-        padding: 4px 12px;
+        padding: 4px 10px;
         border-radius: 999px;
-        font-weight: 600;
         font-size: 12px;
+        font-weight: 600;
+        background: var(--accent-soft);
+        color: var(--accent);
+        border: 1px solid var(--accent-border);
       }
-      .layout {
-        display: grid;
-        grid-template-columns: 1fr minmax(400px, 42vw);
-        gap: 0;
-        min-height: calc(100vh - 200px);
+      .chip.warn {
+        background: var(--warn-soft);
+        color: var(--warn);
+        border-color: var(--warn-border);
       }
-      @media (max-width: 1000px) {
-        .layout { grid-template-columns: 1fr; }
-      }
-      .results {
+      .results-scroll {
         overflow: auto;
-        padding: 0;
-        background: var(--panel);
+        max-height: calc(100dvh - 320px);
+        min-height: 240px;
+      }
+      @media (max-width: 1024px) {
+        .results-scroll { max-height: 420px; }
       }
       table { width: 100%; border-collapse: collapse; font-size: 13px; }
       th {
         text-align: left;
         padding: 10px 14px;
-        background: var(--panel2);
+        background: var(--surface-muted);
         border-bottom: 1px solid var(--border);
         color: var(--muted);
         font-weight: 600;
-        font-size: 12px;
+        font-size: 11px;
         text-transform: uppercase;
-        letter-spacing: 0.02em;
+        letter-spacing: 0.04em;
         position: sticky;
         top: 0;
         z-index: 1;
       }
       td {
-        padding: 12px 14px;
-        border-bottom: 1px solid var(--border);
+        padding: 11px 14px;
+        border-bottom: 1px solid #eef2f7;
         vertical-align: top;
       }
-      tr:hover td { background: #f8fafc; }
+      tbody tr { cursor: pointer; transition: background 0.12s; }
+      tbody tr:hover td { background: #f8fafc; }
+      tbody tr.selected td { background: var(--accent-soft); }
+      tbody tr.selected:hover td { background: #e0edff; }
       .doc-type {
         font-size: 11px;
-        background: var(--accent-dim);
-        color: var(--accent-hover);
+        background: #e0e7ff;
+        color: #3730a3;
         padding: 2px 8px;
         border-radius: 4px;
         display: inline-block;
-        font-weight: 500;
+        font-weight: 600;
       }
       .kf { font-size: 12px; color: var(--muted); max-width: 280px; word-break: break-word; }
-      .summary { font-size: 12px; max-width: 320px; color: var(--text); }
-      .aside {
-        border-left: 1px solid var(--border);
-        padding: 16px;
-        background: var(--panel);
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        overflow: hidden;
-        max-height: calc(100vh - 160px);
+      .summary { font-size: 12px; max-width: 320px; }
+      .empty-state {
+        padding: 40px 24px;
+        text-align: center;
+        color: var(--muted);
       }
-      .aside-form {
-        flex: 0 1 auto;
+      .empty-state strong {
+        display: block;
+        color: var(--text);
+        font-size: 15px;
+        margin-bottom: 8px;
+      }
+      .loading { color: var(--warn); }
+      .error { color: var(--error); }
+
+      /* LLM panel */
+      .llm-stack {
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        overflow-y: auto;
+        gap: 16px;
         min-height: 0;
-        max-height: 42%;
       }
-      .answer-section {
-        flex: 1 1 auto;
+      .llm-panel-body {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        min-height: 0;
-        border-top: 1px solid var(--border);
-        padding-top: 12px;
-      }
-      .answer-section h2 { margin: 0; font-size: 15px; font-weight: 600; }
-      .copy-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-      textarea { resize: vertical; width: 100%; background: #fff; }
-      #question { min-height: 64px; max-height: 96px; }
-      #contextBlock {
-        min-height: 100px;
-        max-height: 160px;
-        font-family: ui-monospace, monospace;
-        font-size: 11px;
-        background: var(--panel2);
+        gap: 14px;
       }
       .token-panel {
-        background: var(--panel2);
+        padding: 12px 14px;
         border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 10px 12px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-muted);
         font-size: 12px;
       }
       .token-panel.warn {
-        border-color: #fcd34d;
-        background: var(--warn-dim);
+        border-color: var(--warn-border);
+        background: var(--warn-soft);
       }
       .token-panel.ok {
-        border-color: #86efac;
-        background: var(--ok-dim);
+        border-color: var(--ok-border);
+        background: var(--ok-soft);
+      }
+      .token-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .token-top strong { font-size: 14px; }
+      .token-meter {
+        height: 6px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        overflow: hidden;
+        margin: 8px 0 6px;
+      }
+      .token-meter-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 999px;
+        background: var(--accent);
+        transition: width 0.2s, background 0.2s;
+      }
+      .token-meter-fill.warn { background: var(--warn); }
+      .token-meter-fill.danger { background: var(--error); }
+      .token-breakdown {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      textarea {
+        resize: vertical;
+        width: 100%;
+        line-height: 1.45;
+      }
+      #question { min-height: 72px; }
+      #contextBlock {
+        min-height: 120px;
+        max-height: 200px;
+        font-family: ui-monospace, "SF Mono", monospace;
+        font-size: 11px;
+        background: var(--surface-muted);
+      }
+      .field-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .action-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        background: var(--surface-muted);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+      }
+      .action-meta {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .action-meta strong {
+        color: var(--accent);
+        font-size: 16px;
+      }
+      .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
       }
       .answer-box {
-        background: var(--panel2);
+        background: var(--surface-muted);
         border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 14px 16px;
+        border-radius: var(--radius-sm);
+        padding: 16px;
         font-size: 13px;
         line-height: 1.65;
         white-space: pre-wrap;
         word-break: break-word;
         overflow-y: auto;
-        flex: 1 1 auto;
         min-height: 280px;
+        max-height: calc(100dvh - 420px);
         color: var(--text);
       }
-      .answer-box.empty { color: var(--muted); font-style: italic; }
-      .loading { color: var(--warn); font-size: 13px; }
-      .error { color: var(--error); font-size: 13px; }
-      .model-tag { font-size: 11px; color: var(--muted); }
-      .synth-footer {
+      .answer-box.empty {
+        color: var(--muted);
+        font-style: italic;
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        padding: 10px 12px;
-        background: var(--panel2);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        font-size: 13px;
-        margin-top: 4px;
+        justify-content: center;
+        text-align: center;
+        padding: 32px 20px;
       }
-      .synth-footer .doc-count strong { color: var(--accent); font-size: 15px; }
+      .model-tag {
+        font-size: 11px;
+        color: var(--muted);
+        padding-top: 4px;
+      }
+      #synthStatus { font-size: 13px; min-height: 20px; }
+      .hidden { display: none !important; }
     </style>
   </head>
   <body>
-    <header>
-      <div>
-        <h1>Tìm kiếm metadata + LLM</h1>
-        <div class="sub">Lọc theo nhân sự / bằng cấp → xem tokens → tổng hợp bằng AI</div>
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">HTH</div>
+        <div>
+          <h1>Tìm kiếm metadata</h1>
+          <p>BV Hưng Thịnh · Catalog OCR</p>
+        </div>
       </div>
-      <a href="/">← Catalog đầy đủ</a>
+      <nav class="nav-tabs" aria-label="Điều hướng">
+        <a href="/">Catalog</a>
+        <a href="/search" class="active" aria-current="page">Tìm kiếm + AI</a>
+      </nav>
     </header>
 
-    <div class="search-bar">
-      <select id="mode">
-        <option value="staff">Nhân sự (tên)</option>
-        <option value="degrees">Bằng / chứng chỉ BS</option>
-      </select>
-      <input id="query" placeholder="VD: Trần Đức Hiển" value="Trần Đức Hiển" />
-      <input id="phongBan" placeholder="Phòng ban (tuỳ chọn)" />
-      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
-        <input type="checkbox" id="allCatalog" />
-        Toàn catalog
-      </label>
-      <button class="primary" id="searchBtn">Tìm kiếm</button>
+    <div class="workflow" aria-label="Quy trình">
+      <span class="step active" id="step1"><span class="step-num">1</span> Lọc hồ sơ</span>
+      <span class="step" id="step2"><span class="step-num">2</span> Chọn tài liệu</span>
+      <span class="step" id="step3"><span class="step-num">3</span> Hỏi AI / Copy</span>
     </div>
 
-    <div class="stats" id="stats">
-      <span>Chưa tìm kiếm</span>
-    </div>
+    <main class="app-body">
+      <section class="results-card card">
+        <div class="card-head">
+          <div>
+            <h2>Kết quả tìm kiếm</h2>
+            <p>Chọn dòng để đưa metadata vào context. Bỏ chọn để giảm tokens.</p>
+          </div>
+        </div>
 
-    <div class="layout">
-      <section class="results">
-        <table>
-          <thead>
-            <tr>
-              <th><input type="checkbox" id="selectAll" title="Chọn tất cả" /></th>
-              <th>ID</th>
-              <th>Loại</th>
-              <th>Key fields</th>
-              <th>Tóm tắt</th>
-            </tr>
-          </thead>
-          <tbody id="rows">
-            <tr><td colspan="5" style="padding:24px;color:var(--muted)">Nhập tên hoặc chọn chế độ bằng cấp rồi bấm Tìm kiếm.</td></tr>
-          </tbody>
-        </table>
+        <div class="card-body" style="padding-bottom:0;border-bottom:1px solid var(--border)">
+          <form class="search-form" id="searchForm" onsubmit="return false">
+            <select id="mode" aria-hidden="true" tabindex="-1">
+              <option value="staff">Nhân sự (tên)</option>
+              <option value="degrees">Bằng / chứng chỉ BS</option>
+            </select>
+
+            <div class="field span-2">
+              <label>Chế độ tìm</label>
+              <div class="mode-pills" role="group" aria-label="Chế độ tìm">
+                <button type="button" class="mode-pill active" data-mode="staff">
+                  <strong>Nhân sự</strong>
+                  <span>Tìm theo tên bác sĩ / nhân viên</span>
+                </button>
+                <button type="button" class="mode-pill" data-mode="degrees">
+                  <strong>Bằng &amp; chứng chỉ</strong>
+                  <span>Danh sách bằng cấp toàn catalog</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="field" id="queryField">
+              <label for="query">Họ tên</label>
+              <input id="query" placeholder="VD: Trần Đức Hiển" value="Trần Đức Hiển" autocomplete="off" />
+              <span class="hint">Enter để tìm nhanh</span>
+            </div>
+
+            <div class="field">
+              <label for="phongBan">Phòng ban</label>
+              <input id="phongBan" placeholder="Tuỳ chọn, VD: CĐHA" autocomplete="off" />
+            </div>
+
+            <div class="field" id="allCatalogField" style="display:none">
+              <label>&nbsp;</label>
+              <label class="check-field">
+                <input type="checkbox" id="allCatalog" />
+                Quét toàn bộ catalog (không lọc path)
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <span style="font-size:12px;color:var(--muted)"><kbd>Enter</kbd> tìm kiếm</span>
+              <button type="button" class="primary" id="searchBtn">Tìm kiếm</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="results-bar" id="stats">
+          <span>Chưa tìm kiếm</span>
+        </div>
+
+        <div class="results-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40px"><input type="checkbox" id="selectAll" title="Chọn tất cả" /></th>
+                <th style="width:56px">ID</th>
+                <th style="width:120px">Loại</th>
+                <th>Metadata</th>
+                <th>Tóm tắt</th>
+              </tr>
+            </thead>
+            <tbody id="rows">
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">
+                    <strong>Bắt đầu bằng tên hoặc chế độ bằng cấp</strong>
+                    Nhập họ tên rồi bấm Tìm kiếm. Kết quả hiện ở đây để bạn chọn trước khi gửi AI.
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
-      <aside class="aside">
-        <div class="aside-form">
-          <h2>LLM tổng hợp</h2>
-
-          <div class="token-panel" id="tokenPanel">
-            <div><strong id="tokenTotal">~0 tokens</strong> ước lượng trước khi gửi</div>
-            <div style="color:var(--muted);margin-top:4px">
-              Câu hỏi: <span id="tokenQ">0</span> · Context: <span id="tokenCtx">0</span> ·
-              <span id="tokenDocs">0</span> tài liệu
+      <aside class="llm-stack">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2>Chuẩn bị câu hỏi AI</h2>
+              <p>Xem tokens trước khi gửi. Copy sang ChatGPT nếu cần.</p>
             </div>
           </div>
+          <div class="card-body llm-panel-body">
+            <div class="token-panel" id="tokenPanel">
+              <div class="token-top">
+                <span>Ước lượng trước khi gửi</span>
+                <strong id="tokenTotal">~0 tokens</strong>
+              </div>
+              <div class="token-meter" aria-hidden="true">
+                <div class="token-meter-fill" id="tokenMeter"></div>
+              </div>
+              <div class="token-breakdown">
+                <span>Câu hỏi: <span id="tokenQ">0</span></span>
+                <span>Context: <span id="tokenCtx">0</span></span>
+                <span><span id="tokenDocs">0</span> tài liệu</span>
+              </div>
+            </div>
 
-          <label style="font-size:12px;color:var(--muted)">Câu hỏi gửi LLM</label>
-          <textarea id="question" placeholder="VD: Tóm tắt hồ sơ và liệt kê chứng chỉ còn hiệu lực">Tóm tắt toàn bộ hồ sơ và các giấy tờ quan trọng</textarea>
+            <div class="field">
+              <label for="question">Câu hỏi gửi LLM</label>
+              <textarea id="question" placeholder="VD: Tóm tắt hồ sơ và liệt kê chứng chỉ còn hiệu lực">Tóm tắt toàn bộ hồ sơ và các giấy tờ quan trọng</textarea>
+            </div>
 
-          <div class="label-row">
-            <label style="font-size:12px;color:var(--muted)">
-              Context gửi kèm (sửa / bớt dòng để giảm tokens)
-            </label>
-            <button type="button" class="copy-btn" id="copyContextBtn" disabled title="Sao chép metadata context">Copy context</button>
+            <div class="field">
+              <div class="field-head">
+                <label for="contextBlock">Metadata đã chọn</label>
+                <button type="button" class="secondary" id="copyContextBtn" disabled style="padding:4px 10px;font-size:11px">Copy context</button>
+              </div>
+              <textarea id="contextBlock" placeholder="Sau khi Tìm kiếm, metadata catalog hiện ở đây. Có thể sửa hoặc xoá dòng để giảm tokens." readonly></textarea>
+              <span class="hint">Chỉnh sửa trực tiếp để bớt nội dung trước khi gửi.</span>
+            </div>
+
+            <div class="action-bar" id="synthFooter">
+              <div class="action-meta">
+                <strong id="footerDocs">0</strong> tài liệu
+                <span style="margin-left:8px" class="chip" id="footerTokens">~0 tokens</span>
+              </div>
+              <div class="action-buttons">
+                <button type="button" class="secondary" id="copyChatBtn" disabled>Copy cho AI Chat</button>
+                <button type="button" class="primary" id="synthBtn" disabled>Gửi LLM tổng hợp</button>
+              </div>
+            </div>
+            <div id="synthStatus"></div>
           </div>
-          <textarea id="contextBlock" placeholder="Sau khi Tìm kiếm, metadata catalog hiện ở đây…" readonly></textarea>
-
-          <div class="synth-footer" id="synthFooter">
-            <span class="doc-count"><strong id="footerDocs">0</strong> tài liệu chọn</span>
-            <span class="token-badge" id="footerTokens">~0 tokens</span>
-          </div>
-
-          <div class="copy-actions">
-            <button type="button" class="copy-btn" id="copyChatBtn" disabled title="Sao chép câu hỏi + context để dán vào ChatGPT / Claude">
-              Copy → AI Chat
-            </button>
-          </div>
-
-          <button class="primary" id="synthBtn" disabled>Gửi LLM tổng hợp</button>
-          <div id="synthStatus"></div>
         </div>
 
-        <div class="answer-section">
-          <div class="section-head">
-            <h2>Kết quả trả lời</h2>
-            <button type="button" class="copy-btn" id="copyAnswerBtn" disabled title="Sao chép kết quả LLM">Copy</button>
+        <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0">
+          <div class="card-head">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%">
+              <div>
+                <h2>Kết quả trả lời</h2>
+                <p>DeepSeek tổng hợp từ metadata đã chọn.</p>
+              </div>
+              <button type="button" class="secondary" id="copyAnswerBtn" disabled style="padding:4px 10px;font-size:11px;flex-shrink:0">Copy</button>
+            </div>
           </div>
-          <div class="answer-box empty" id="answer">Kết quả trả lời sẽ hiển thị ở đây.</div>
-          <div class="model-tag" id="modelTag"></div>
+          <div class="card-body" style="flex:1;display:flex;flex-direction:column">
+            <div class="answer-box empty" id="answer">Chưa có kết quả. Hoàn thành bước tìm kiếm và bấm「Gửi LLM tổng hợp」.</div>
+            <div class="model-tag" id="modelTag"></div>
+          </div>
         </div>
       </aside>
-    </div>
+    </main>
 
     <script>
       const modeEl = document.getElementById("mode");
       const queryEl = document.getElementById("query");
       const phongEl = document.getElementById("phongBan");
       const allCatEl = document.getElementById("allCatalog");
+      const allCatalogField = document.getElementById("allCatalogField");
+      const queryField = document.getElementById("queryField");
       const searchBtn = document.getElementById("searchBtn");
       const statsEl = document.getElementById("stats");
       const rowsEl = document.getElementById("rows");
@@ -388,6 +740,7 @@
       const selectAllEl = document.getElementById("selectAll");
       const tokenPanel = document.getElementById("tokenPanel");
       const tokenTotal = document.getElementById("tokenTotal");
+      const tokenMeter = document.getElementById("tokenMeter");
       const tokenQ = document.getElementById("tokenQ");
       const tokenCtx = document.getElementById("tokenCtx");
       const tokenDocs = document.getElementById("tokenDocs");
@@ -396,6 +749,13 @@
       const copyContextBtn = document.getElementById("copyContextBtn");
       const copyChatBtn = document.getElementById("copyChatBtn");
       const copyAnswerBtn = document.getElementById("copyAnswerBtn");
+      const modePills = document.querySelectorAll(".mode-pill");
+      const step1 = document.getElementById("step1");
+      const step2 = document.getElementById("step2");
+      const step3 = document.getElementById("step3");
+
+      const TOKEN_SOFT = 8000;
+      const TOKEN_HARD = 20000;
 
       let currentPack = null;
       let allDocuments = [];
@@ -405,15 +765,48 @@
         return Math.max(1, Math.ceil(String(text || "").length / 4));
       }
 
+      function setWorkflowStep(active) {
+        [step1, step2, step3].forEach((el, i) => {
+          el.classList.toggle("active", i + 1 === active);
+        });
+      }
+
+      function syncRowSelection() {
+        document.querySelectorAll("#rows tr[data-id]").forEach((tr) => {
+          const id = Number(tr.dataset.id);
+          tr.classList.toggle("selected", selectedIds.has(id));
+        });
+      }
+
+      function setMode(mode) {
+        modeEl.value = mode;
+        const isDeg = mode === "degrees";
+        modePills.forEach((pill) => {
+          pill.classList.toggle("active", pill.dataset.mode === mode);
+        });
+        queryField.classList.toggle("hidden", isDeg);
+        allCatalogField.style.display = isDeg ? "flex" : "none";
+        allCatalogField.classList.toggle("field", isDeg);
+        if (isDeg) {
+          queryEl.value = "";
+          queryEl.disabled = true;
+        } else {
+          queryEl.disabled = false;
+          if (!queryEl.value.trim()) queryEl.value = "Trần Đức Hiển";
+        }
+      }
+
+      modePills.forEach((pill) => {
+        pill.addEventListener("click", () => setMode(pill.dataset.mode));
+      });
+
       function buildChatPack() {
         const q = questionEl.value.trim();
         const ctx = contextEl.value.trim();
         const docs = selectedIds.size;
         const label = currentPack?.query || queryEl.value.trim() || "catalog";
-        const header = `# Hồ sơ catalog — ${label} (${docs} tài liệu)\n\n`;
-        if (!q) {
-          return header + ctx;
-        }
+        const header = `# Hồ sơ catalog - ${label} (${docs} tài liệu)\n\n`;
+        if (!q) return header + ctx;
         return `${header}## Câu hỏi\n${q}\n\n## Dữ liệu metadata\n\n${ctx}`;
       }
 
@@ -433,7 +826,7 @@
           document.body.removeChild(ta);
         }
         const orig = btn.textContent;
-        btn.textContent = "Đã copy!";
+        btn.textContent = "Đã copy";
         btn.classList.add("copied");
         setTimeout(() => {
           btn.textContent = orig;
@@ -452,10 +845,10 @@
       }
 
       function buildContextFromDocs(docs, queryLabel) {
-        const lines = [`# ${docs.length} tài liệu — ${queryLabel}`, ""];
+        const lines = [`# ${docs.length} tài liệu - ${queryLabel}`, ""];
         for (const d of docs) {
           const kf = JSON.stringify(d.key_fields || {}, null, 0);
-          let block = `[doc_id=${d.doc_id}] type=${d.doc_type || "—"} path=.../${d.path_tail || ""}\nkey_fields=${kf}\n`;
+          let block = `[doc_id=${d.doc_id}] type=${d.doc_type || "-"}\npath=.../${d.path_tail || ""}\nkey_fields=${kf}\n`;
           if (d.summary) block += `summary=${String(d.summary).slice(0, 400)}\n`;
           lines.push(block);
         }
@@ -475,12 +868,24 @@
         tokenTotal.textContent = `~${tTotal} tokens`;
         footerDocs.textContent = String(docs.length);
         footerTokens.textContent = `~${tTotal} tokens`;
+
+        const pct = Math.min(100, Math.round((tTotal / TOKEN_HARD) * 100));
+        tokenMeter.style.width = `${pct}%`;
+        tokenMeter.classList.remove("warn", "danger");
+        if (tTotal >= TOKEN_HARD) tokenMeter.classList.add("danger");
+        else if (tTotal >= TOKEN_SOFT) tokenMeter.classList.add("warn");
+        footerTokens.classList.toggle("warn", tTotal >= TOKEN_SOFT);
+
         const ok = docs.length > 0 && ctx.length >= 80 && q.length >= 5;
         tokenPanel.classList.toggle("ok", ok);
-        tokenPanel.classList.toggle("warn", !ok);
+        tokenPanel.classList.toggle("warn", !ok && (docs.length > 0 || q.length > 0));
         synthBtn.disabled = !ok;
         contextEl.readOnly = docs.length === 0;
         updateCopyButtons();
+
+        if (docs.length > 0) setWorkflowStep(2);
+        if (ok) setWorkflowStep(3);
+        else if (docs.length === 0 && !currentPack) setWorkflowStep(1);
       }
 
       function rebuildContext() {
@@ -488,6 +893,7 @@
         const docs = allDocuments.filter((d) => selectedIds.has(d.doc_id));
         const label = currentPack.query || queryEl.value.trim() || "catalog";
         contextEl.value = buildContextFromDocs(docs, label);
+        syncRowSelection();
         updateTokenPanel();
       }
 
@@ -499,21 +905,13 @@
       }
 
       function kfPreview(kf) {
-        if (!kf || !Object.keys(kf).length) return "—";
+        if (!kf || !Object.keys(kf).length) return "-";
         const parts = [];
         for (const [k, v] of Object.entries(kf)) {
           if (v) parts.push(`${k}: ${v}`);
         }
-        return esc(parts.slice(0, 5).join(" · ")) + (parts.length > 5 ? "…" : "");
+        return esc(parts.slice(0, 5).join(" | ")) + (parts.length > 5 ? "…" : "");
       }
-
-      modeEl.onchange = () => {
-        const isDeg = modeEl.value === "degrees";
-        queryEl.placeholder = isDeg ? "(không bắt buộc)" : "VD: Trần Đức Hiển";
-        queryEl.disabled = isDeg;
-        if (isDeg) queryEl.value = "";
-        allCatEl.parentElement.style.display = isDeg ? "flex" : "none";
-      };
 
       async function runSearch() {
         searchBtn.disabled = true;
@@ -524,9 +922,10 @@
         selectedIds.clear();
         contextEl.value = "";
         synthBtn.disabled = true;
-        answerEl.textContent = "Kết quả trả lời sẽ hiển thị ở đây.";
+        answerEl.textContent = "Chưa có kết quả. Hoàn thành bước tìm kiếm và bấm「Gửi LLM tổng hợp」.";
         answerEl.classList.add("empty");
         modelTag.textContent = "";
+        setWorkflowStep(1);
         updateCopyButtons();
 
         const params = new URLSearchParams();
@@ -544,7 +943,7 @@
           renderResults(data);
         } catch (err) {
           statsEl.innerHTML = `<span class="error">${esc(err.message)}</span>`;
-          rowsEl.innerHTML = `<tr><td colspan="5" class="error">${esc(err.message)}</td></tr>`;
+          rowsEl.innerHTML = `<tr><td colspan="5"><div class="empty-state error">${esc(err.message)}</div></td></tr>`;
         } finally {
           searchBtn.disabled = false;
         }
@@ -558,24 +957,32 @@
         if (selectAllEl) selectAllEl.checked = docs.length > 0;
 
         statsEl.innerHTML = `
-          <span><strong>${docs.length}</strong> tài liệu</span>
-          <span class="token-badge">~${data.estimated_tokens_prompt || 0} tokens (metadata)</span>
+          <span><strong style="color:var(--text)">${docs.length}</strong> tài liệu</span>
+          <span class="chip">~${data.estimated_tokens_prompt || 0} tokens metadata</span>
           <span>${data.prompt_chars || 0} ký tự</span>
         `;
+
         if (docs.length === 0) {
-          rowsEl.innerHTML = `<tr><td colspan="5" style="color:var(--muted)">Không có kết quả — thử「Toàn catalog」hoặc đổi từ khóa.</td></tr>`;
+          rowsEl.innerHTML = `
+            <tr><td colspan="5">
+              <div class="empty-state">
+                <strong>Không có kết quả</strong>
+                Thử bật「Quét toàn catalog」hoặc đổi từ khóa / phòng ban.
+              </div>
+            </td></tr>`;
           contextEl.value = "";
           updateTokenPanel();
           return;
         }
+
         contextEl.value = data.llm_prompt_block || buildContextFromDocs(docs, data.query || "");
         updateTokenPanel();
 
         rowsEl.innerHTML = docs.map((d) => `
-          <tr data-id="${d.doc_id}">
-            <td><input type="checkbox" class="doc-check" data-id="${d.doc_id}" checked /></td>
+          <tr data-id="${d.doc_id}" class="selected">
+            <td onclick="event.stopPropagation()"><input type="checkbox" class="doc-check" data-id="${d.doc_id}" checked /></td>
             <td>${d.doc_id}</td>
-            <td><span class="doc-type">${esc(d.doc_type || "—")}</span></td>
+            <td><span class="doc-type">${esc(d.doc_type || "-")}</span></td>
             <td class="kf">${kfPreview(d.key_fields)}</td>
             <td class="summary">${esc((d.summary || "").slice(0, 200))}${(d.summary || "").length > 200 ? "…" : ""}</td>
           </tr>
@@ -586,10 +993,17 @@
             const id = Number(e.target.dataset.id);
             if (e.target.checked) selectedIds.add(id);
             else selectedIds.delete(id);
-            if (selectAllEl) {
-              selectAllEl.checked = selectedIds.size === allDocuments.length;
-            }
+            if (selectAllEl) selectAllEl.checked = selectedIds.size === allDocuments.length;
             rebuildContext();
+          });
+        });
+
+        document.querySelectorAll("#rows tr[data-id]").forEach((tr) => {
+          tr.addEventListener("click", () => {
+            const cb = tr.querySelector(".doc-check");
+            if (!cb) return;
+            cb.checked = !cb.checked;
+            cb.dispatchEvent(new Event("change"));
           });
         });
       }
@@ -597,12 +1011,8 @@
       if (selectAllEl) {
         selectAllEl.addEventListener("change", () => {
           selectedIds.clear();
-          if (selectAllEl.checked) {
-            allDocuments.forEach((d) => selectedIds.add(d.doc_id));
-          }
-          document.querySelectorAll(".doc-check").forEach((cb) => {
-            cb.checked = selectAllEl.checked;
-          });
+          if (selectAllEl.checked) allDocuments.forEach((d) => selectedIds.add(d.doc_id));
+          document.querySelectorAll(".doc-check").forEach((cb) => { cb.checked = selectAllEl.checked; });
           rebuildContext();
         });
       }
@@ -616,17 +1026,17 @@
         const docCount = selectedIds.size;
 
         if (!question) {
-          synthStatus.innerHTML = '<span class="error">Nhập câu hỏi.</span>';
+          synthStatus.innerHTML = '<span class="error">Nhập câu hỏi trước khi gửi.</span>';
           return;
         }
         if (docCount < 1 || contextBlock.length < 80) {
-          synthStatus.innerHTML = '<span class="error">Chưa có dữ liệu — bấm Tìm kiếm và chọn ít nhất 1 tài liệu.</span>';
+          synthStatus.innerHTML = '<span class="error">Chọn ít nhất 1 tài liệu và đảm bảo context đủ dài.</span>';
           return;
         }
 
         synthBtn.disabled = true;
         const est = estimateTokens(question + "\n\n" + contextBlock);
-        synthStatus.innerHTML = `<span class="loading">LLM đang tổng hợp… (~${est} tokens · ${docCount} tài liệu)</span>`;
+        synthStatus.innerHTML = `<span class="loading">Đang tổng hợp… (~${est} tokens, ${docCount} tài liệu)</span>`;
         answerEl.textContent = "";
         answerEl.classList.remove("empty");
 
@@ -644,12 +1054,12 @@
           if (!data.ok) throw new Error(data.error || "Lỗi AI");
           answerEl.textContent = data.answer;
           modelTag.textContent =
-            `${data.model || "deepseek"} · gửi ~${data.estimated_tokens_input || est} tokens · ${data.doc_count} doc`;
+            `${data.model || "deepseek"} | ~${data.estimated_tokens_input || est} tokens | ${data.doc_count} tài liệu`;
           synthStatus.innerHTML = "";
           updateCopyButtons();
         } catch (err) {
           synthStatus.innerHTML = `<span class="error">${esc(err.message)}</span>`;
-          answerEl.textContent = "Lỗi khi gọi LLM.";
+          answerEl.textContent = "Không gọi được LLM. Thử lại hoặc dùng Copy cho AI Chat.";
           answerEl.classList.add("empty");
         } finally {
           updateTokenPanel();
@@ -662,6 +1072,9 @@
       copyChatBtn.onclick = () => copyText(buildChatPack(), copyChatBtn);
       copyAnswerBtn.onclick = () => copyText(answerEl.textContent, copyAnswerBtn);
       queryEl.onkeydown = (e) => { if (e.key === "Enter") runSearch(); };
+
+      setMode(modeEl.value);
+      updateTokenPanel();
     </script>
   </body>
 </html>
