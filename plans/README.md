@@ -4,6 +4,7 @@ Single Source of Truth for planning logs.
 
 ## Entries
 
+- [20260701_1112-teable-field-driven-search-plan.md](./20260701_1112-teable-field-driven-search-plan.md): UI filter theo cột Teable + facet API; thay mode staff/degrees.
 - [20260701_1007-teable-sot-workflow-architecture-plan.md](./20260701_1007-teable-sot-workflow-architecture-plan.md): CQRS Teable SoT + PG cache; phase search/webhook/publish.
 - [20260630_2315-teable-sot-migration-plan.md](./20260630_2315-teable-sot-migration-plan.md): Chuyển SoT sang Teable; search đọc Teable API; webhook human verify.
 - [20260630_2308-synthesize-ux-fix-plan.md](./20260630_2308-synthesize-ux-fix-plan.md): Context preview, token panel, validate trước synthesize.
